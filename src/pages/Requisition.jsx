@@ -196,7 +196,7 @@ export default function Requisition() {
               <ArrowLeft size={20} className="inline-icon" /> แก้ไขรายการ
             </button>
             <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting} style={{ padding: '0.75rem 3rem', fontSize: '1.1rem', background: 'var(--success)', borderColor: 'var(--success)' }}>
-              {submitting ? 'กำลังส่งข้อมูล...' : 'ยืนยันการเบิกพัสดุ'}
+              {submitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขอเบิก'}
             </button>
           </div>
         </div>

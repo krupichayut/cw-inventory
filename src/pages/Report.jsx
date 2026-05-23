@@ -8,12 +8,14 @@ export default function Report() {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   
-  // Default signatures
+  // Default signatures and settings
   const [signatures, setSignatures] = useState({
     reporterName: '',
     reporterTitle: 'เจ้าหน้าที่พัสดุ',
     approverName: '',
-    approverTitle: 'ผู้อำนวยการโรงเรียนไชยาวิทยา'
+    approverTitle: 'ผู้อำนวยการโรงเรียนไชยาวิทยา',
+    reportMonth: new Date().getMonth(),
+    reportYear: new Date().getFullYear()
   });
 
   useEffect(() => {
@@ -42,13 +44,19 @@ export default function Report() {
   };
 
   const getThaiMonthYear = () => {
-    const date = new Date();
     const thaiMonths = [
       "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
       "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ];
-    return `เดือน ${thaiMonths[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
+    const m = signatures.reportMonth !== undefined ? parseInt(signatures.reportMonth) : new Date().getMonth();
+    const y = signatures.reportYear !== undefined ? parseInt(signatures.reportYear) : new Date().getFullYear();
+    return `เดือน ${thaiMonths[m]} พ.ศ. ${y + 543}`;
   };
+
+  const thaiMonthsList = [
+    "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+  ];
 
   return (
     <div className="report-container">
@@ -120,9 +128,33 @@ export default function Report() {
 
       {showSettings && (
         <div className="modal-overlay no-print">
-          <div className="modal-content glass-panel animate-fade-in">
-            <h2>ตั้งค่ารายชื่อท้ายเอกสาร</h2>
+          <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '500px' }}>
+            <h2>ตั้งค่ารายงาน</h2>
             <form onSubmit={handleSaveSignatures}>
+              
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>เดือนที่รายงาน</label>
+                  <select 
+                    value={signatures.reportMonth !== undefined ? signatures.reportMonth : new Date().getMonth()} 
+                    onChange={e => setSignatures({...signatures, reportMonth: parseInt(e.target.value)})}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-light)' }}
+                  >
+                    {thaiMonthsList.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                  </select>
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>ปี (ค.ศ.)</label>
+                  <input 
+                    type="number" 
+                    value={signatures.reportYear !== undefined ? signatures.reportYear : new Date().getFullYear()} 
+                    onChange={e => setSignatures({...signatures, reportYear: parseInt(e.target.value)})}
+                  />
+                </div>
+              </div>
+              
+              <hr style={{ margin: '1rem 0', borderColor: 'var(--border-light)' }}/>
+              
               <div className="form-group">
                 <label>ชื่อผู้รายงาน (ซ้าย)</label>
                 <input type="text" value={signatures.reporterName} onChange={e => setSignatures({...signatures, reporterName: e.target.value})} placeholder="เช่น นายสมชาย ใจดี" />

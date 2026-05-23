@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
-import { Plus, Search, AlertTriangle, Image as ImageIcon, PackagePlus } from 'lucide-react';
+import { Plus, Search, AlertTriangle, Image as ImageIcon, PackagePlus, Edit, Trash2 } from 'lucide-react';
 import './Inventory.css';
 
 export default function Inventory() {
@@ -11,6 +11,7 @@ export default function Inventory() {
   const [newItem, setNewItem] = useState({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '' });
   const [uploading, setUploading] = useState(false);
   const [adjustModal, setAdjustModal] = useState({ show: false, item: null, qty: 1 });
+  const [editModal, setEditModal] = useState({ show: false, item: null, name: '', minStock: 0, category: '' });
 
   const loadData = async () => {
     setLoading(true);
@@ -56,15 +57,57 @@ export default function Inventory() {
 
   const submitAdjustStock = async (e) => {
     e.preventDefault();
-    setUploading(true);
+    const qty = parseInt(adjustModal.qty);
+    const targetId = adjustModal.item.ID;
+    
+    // Optimistic Update (เพื่อความรวดเร็ว)
+    setItems(items.map(i => i.ID === targetId ? { ...i, Balance: parseInt(i.Balance || 0) + qty } : i));
+    setAdjustModal({ show: false, item: null, qty: 1 });
+    
     try {
-      await api.adjustStock(adjustModal.item.ID, parseInt(adjustModal.qty));
-      setAdjustModal({ show: false, item: null, qty: 1 });
-      loadData();
+      await api.adjustStock(targetId, qty);
     } catch (e) {
       alert('Error: ' + e);
+      loadData(); // Revert on failure
+    }
+  };
+
+  const handleEditItem = async (e) => {
+    e.preventDefault();
+    setUploading(true);
+    const targetId = editModal.item.ID;
+    const updatedData = {
+      id: targetId,
+      name: editModal.name,
+      minStock: parseInt(editModal.minStock),
+      category: editModal.category
+    };
+
+    // Optimistic Update
+    setItems(items.map(i => i.ID === targetId ? { ...i, Name: updatedData.name, MinStock: updatedData.minStock, Category: updatedData.category } : i));
+    setEditModal({ show: false, item: null });
+
+    try {
+      await api.updateItem(updatedData);
+    } catch (e) {
+      alert('Error: ' + e);
+      loadData();
     }
     setUploading(false);
+  };
+
+  const handleDeleteItem = async (id) => {
+    if (!window.confirm('คุณแน่ใจหรือไม่ที่จะลบพัสดุนี้? ข้อมูลจะไม่สามารถกู้คืนได้')) return;
+    
+    // Optimistic Update
+    setItems(items.filter(i => i.ID !== id));
+    
+    try {
+      await api.deleteItem(id);
+    } catch (e) {
+      alert('Error: ' + e);
+      loadData();
+    }
   };
 
   const filteredItems = items.filter(i => i.Name.toLowerCase().includes(search.toLowerCase()) || i.ID.toLowerCase().includes(search.toLowerCase()));
@@ -125,13 +168,27 @@ export default function Inventory() {
                     </div>
                   </div>
                 </div>
-                <div style={{ padding: '1rem', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ padding: '0.75rem', borderTop: '1px solid var(--border-light)', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                   <button 
                     className={`btn ${isLow ? 'btn-primary' : 'btn-ghost'}`} 
-                    style={{ width: '100%' }}
+                    style={{ flex: 1, padding: '0.5rem' }}
                     onClick={() => setAdjustModal({ show: true, item: item, qty: 1 })}
                   >
-                    <PackagePlus size={18} /> เติมสต๊อก
+                    <PackagePlus size={16} /> เติมสต๊อก
+                  </button>
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ padding: '0.5rem' }}
+                    onClick={() => setEditModal({ show: true, item: item, name: item.Name, minStock: item.MinStock, category: item.Category })}
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button 
+                    className="btn btn-ghost text-danger" 
+                    style={{ padding: '0.5rem' }}
+                    onClick={() => handleDeleteItem(item.ID)}
+                  >
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -194,6 +251,34 @@ export default function Inventory() {
                 <button type="button" className="btn btn-ghost" onClick={() => setAdjustModal({ show: false, item: null, qty: 1 })}>ยกเลิก</button>
                 <button type="submit" className="btn btn-primary" disabled={uploading}>
                   {uploading ? 'กำลังบันทึก...' : 'ยืนยันการเติมสต๊อก'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editModal.show && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
+            <h2>แก้ไขข้อมูลพัสดุ</h2>
+            <form onSubmit={handleEditItem}>
+              <div className="form-group">
+                <label>ชื่อพัสดุ</label>
+                <input type="text" required value={editModal.name} onChange={e => setEditModal({...editModal, name: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>หมวดหมู่</label>
+                <input type="text" required value={editModal.category} onChange={e => setEditModal({...editModal, category: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>จุดวิกฤต (Min Stock)</label>
+                <input type="number" required min="0" value={editModal.minStock} onChange={e => setEditModal({...editModal, minStock: e.target.value})} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-ghost" onClick={() => setEditModal({ show: false, item: null })}>ยกเลิก</button>
+                <button type="submit" className="btn btn-primary" disabled={uploading}>
+                  {uploading ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
                 </button>
               </div>
             </form>

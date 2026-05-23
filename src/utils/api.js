@@ -101,5 +101,17 @@ export const api = {
     }
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adjustStock', itemId, quantity }) });
     return await res.json();
+  },
+
+  async updateItem(item) {
+    if (useMock) return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'updateItem', ...item }) });
+    return await res.json();
+  },
+
+  async deleteItem(id) {
+    if (useMock) return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteItem', id }) });
+    return await res.json();
   }
 };

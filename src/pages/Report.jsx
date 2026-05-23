@@ -104,15 +104,15 @@ export default function Report() {
           </table>
         )}
 
-        <div className="signature-section">
-          <div className="signature-box">
-            <p style={{ whiteSpace: 'nowrap' }}>ลงชื่อ................................................ผู้รายงาน</p>
-            <p style={{ whiteSpace: 'nowrap' }}>({signatures.reporterName ? signatures.reporterName : '................................................'})</p>
+        <div className="signature-section" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40mm' }}>
+          <div className="signature-box" style={{ width: '45%', textAlign: 'center' }}>
+            <p>ลงชื่อ........................................ผู้รายงาน</p>
+            <p>({signatures.reporterName ? signatures.reporterName : '........................................'})</p>
             <p>ตำแหน่ง {signatures.reporterTitle}</p>
           </div>
-          <div className="signature-box">
-            <p style={{ whiteSpace: 'nowrap' }}>ลงชื่อ................................................ผู้อนุมัติ</p>
-            <p style={{ whiteSpace: 'nowrap' }}>({signatures.approverName ? signatures.approverName : '................................................'})</p>
+          <div className="signature-box" style={{ width: '45%', textAlign: 'center' }}>
+            <p>ลงชื่อ........................................ผู้อนุมัติ</p>
+            <p>({signatures.approverName ? signatures.approverName : '........................................'})</p>
             <p>ตำแหน่ง {signatures.approverTitle}</p>
           </div>
         </div>

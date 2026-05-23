@@ -113,5 +113,11 @@ export const api = {
     if (useMock) return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteItem', id }) });
     return await res.json();
+  },
+
+  async deleteRequest(requestId) {
+    if (useMock) return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteRequest', requestId }) });
+    return await res.json();
   }
 };

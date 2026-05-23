@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import { CheckCircle, Clock, Package } from 'lucide-react';
+import { CheckCircle, Clock, Package, Trash2 } from 'lucide-react';
 import './Fulfillment.css';
 
 export default function Fulfillment() {
@@ -29,6 +29,21 @@ export default function Fulfillment() {
       alert('Error: ' + e);
     }
     setProcessing(null);
+  };
+
+  const handleDeleteRequest = async (requestId, isFulfilled) => {
+    if (!window.confirm('คุณแน่ใจหรือไม่ที่จะลบรายการเบิกนี้?' + (isFulfilled ? '\n\n(ระบบจะคำนวณและคืนสต๊อกกลับเข้าคลังให้อัตโนมัติ)' : ''))) return;
+    
+    // Optimistic Update
+    setRequests(requests.filter(r => r.RequestID !== requestId));
+    
+    try {
+      await api.deleteRequest(requestId);
+      loadData();
+    } catch (e) {
+      alert('Error: ' + e);
+      loadData();
+    }
   };
 
   // Group requests by RequestID
@@ -71,7 +86,12 @@ export default function Fulfillment() {
                       <div className="req-id">{req.id}</div>
                       <div className="req-user">ผู้เบิก: {req.requester}</div>
                     </div>
-                    <div className="req-date">{req.date}</div>
+                    <div style={{ textAlign: 'right' }}>
+                      <button className="btn-ghost text-danger" onClick={() => handleDeleteRequest(req.id, false)} style={{ padding: '0.25rem', marginBottom: '0.5rem' }}>
+                        <Trash2 size={18} />
+                      </button>
+                      <div className="req-date">{req.date}</div>
+                    </div>
                   </div>
                   <div className="req-body">
                     {req.items.map((it, idx) => (
@@ -100,13 +120,16 @@ export default function Fulfillment() {
           <div className="column fulfilled-column">
             <h2><CheckCircle size={20} className="inline-icon text-secondary" /> จ่ายแล้วล่าสุด</h2>
             <div className="request-list opacity-75">
-              {fulfilledList.slice().reverse().slice(0, 10).map(req => (
+              {fulfilledList.slice().reverse().slice(0, 50).map(req => (
                 <div key={req.id} className="req-card card">
-                  <div className="req-header">
+                  <div className="req-header" style={{ alignItems: 'flex-start' }}>
                     <div>
                       <div className="req-user">{req.requester}</div>
+                      <div className="badge-success mt-1">จ่ายแล้ว</div>
                     </div>
-                    <div className="badge-success">จ่ายแล้ว</div>
+                    <button className="btn-ghost text-danger" onClick={() => handleDeleteRequest(req.id, true)} style={{ padding: '0.25rem' }}>
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                   <div className="req-body text-sm text-muted">
                     {req.items.map((it, idx) => (

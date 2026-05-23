@@ -106,13 +106,13 @@ export default function Report() {
 
         <div className="signature-section">
           <div className="signature-box">
-            <p>ลงชื่อ.........................................................ผู้รายงาน</p>
-            <p>({signatures.reporterName ? signatures.reporterName : '.........................................................'})</p>
+            <p style={{ whiteSpace: 'nowrap' }}>ลงชื่อ................................................ผู้รายงาน</p>
+            <p style={{ whiteSpace: 'nowrap' }}>({signatures.reporterName ? signatures.reporterName : '................................................'})</p>
             <p>ตำแหน่ง {signatures.reporterTitle}</p>
           </div>
           <div className="signature-box">
-            <p>ลงชื่อ.........................................................ผู้อนุมัติ</p>
-            <p>({signatures.approverName ? signatures.approverName : '.........................................................'})</p>
+            <p style={{ whiteSpace: 'nowrap' }}>ลงชื่อ................................................ผู้อนุมัติ</p>
+            <p style={{ whiteSpace: 'nowrap' }}>({signatures.approverName ? signatures.approverName : '................................................'})</p>
             <p>ตำแหน่ง {signatures.approverTitle}</p>
           </div>
         </div>

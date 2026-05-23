@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Requisition from './pages/Requisition';
 import Fulfillment from './pages/Fulfillment';
@@ -36,7 +37,8 @@ function App() {
               <Navbar onLogout={() => setIsAdminAuth(false)} onChangePassword={() => setShowPasswordModal(true)} />
               <main className="main-content animate-fade-in">
                 <Routes>
-                  <Route path="/" element={<Inventory />} />
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/inventory" element={<Inventory />} />
                   <Route path="/fulfillment" element={<Fulfillment />} />
                   <Route path="/stocktake" element={<StockTake />} />
                   <Route path="/departments" element={<Departments />} />

@@ -24,11 +24,12 @@
   background: white;
   width: 210mm;
   min-height: 297mm;
-  padding: 20mm;
+  padding: 3.5cm 2.0cm 2.5cm 3.0cm;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  font-family: 'Sarabun', sans-serif;
+  font-family: 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif;
   color: black;
   margin: 0 auto;
+  line-height: 1;
 }
 
 .report-header {
@@ -38,28 +39,28 @@
 }
 
 .report-title {
-  font-size: 20pt;
-  font-weight: 700;
+  font-size: 18pt;
+  font-weight: bold;
   margin-bottom: 0.5rem;
   color: black;
 }
 
 .report-subtitle {
   font-size: 16pt;
-  font-weight: 700;
+  font-weight: bold;
   margin-bottom: 0.5rem;
   color: black;
 }
 
 .report-date {
-  font-size: 14pt;
+  font-size: 16pt;
 }
 
 .report-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 3rem;
-  font-size: 14pt;
+  font-size: 16pt;
 }
 
 .report-table th, .report-table td {
@@ -82,8 +83,12 @@
 
 .signature-box {
   text-align: center;
-  font-size: 14pt;
-  line-height: 2;
+  font-size: 16pt;
+  line-height: 1.5;
+}
+
+.signature-box p.sig-title {
+  font-weight: bold;
 }
 
 /* Print Specific Rules */
@@ -116,7 +121,7 @@
   .a4-paper {
     width: 210mm;
     min-height: 297mm;
-    padding: 20mm;
+    padding: 3.5cm 2.0cm 2.5cm 3.0cm;
     box-shadow: none;
     margin: 0;
   }

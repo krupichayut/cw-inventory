@@ -108,12 +108,12 @@ export default function Report() {
           <div className="signature-box" style={{ width: '45%', textAlign: 'center' }}>
             <p>ลงชื่อ........................................ผู้รายงาน</p>
             <p>({signatures.reporterName ? signatures.reporterName : '........................................'})</p>
-            <p>ตำแหน่ง {signatures.reporterTitle}</p>
+            <p className="sig-title">ตำแหน่ง {signatures.reporterTitle}</p>
           </div>
           <div className="signature-box" style={{ width: '45%', textAlign: 'center' }}>
             <p>ลงชื่อ........................................ผู้อนุมัติ</p>
             <p>({signatures.approverName ? signatures.approverName : '........................................'})</p>
-            <p>ตำแหน่ง {signatures.approverTitle}</p>
+            <p className="sig-title">ตำแหน่ง {signatures.approverTitle}</p>
           </div>
         </div>
       </div>

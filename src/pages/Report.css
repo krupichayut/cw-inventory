@@ -24,7 +24,7 @@
   background: white;
   width: 210mm;
   min-height: 297mm;
-  padding: 3.5cm 2.0cm 2.5cm 3.0cm;
+  padding: 2cm; /* Screen view padding */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   font-family: 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif;
   color: black;
@@ -60,7 +60,7 @@
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 3rem;
-  font-size: 16pt;
+  font-size: 14pt;
 }
 
 .report-table th, .report-table td {
@@ -91,11 +91,10 @@
   font-weight: bold;
 }
 
-/* Print Specific Rules */
 @media print {
   @page {
     size: A4;
-    margin: 0; /* Let the content handle margins */
+    margin: 3.5cm 2.0cm 2.5cm 3.0cm;
   }
 
   body {
@@ -119,9 +118,9 @@
   }
 
   .a4-paper {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 3.5cm 2.0cm 2.5cm 3.0cm;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
     box-shadow: none;
     margin: 0;
   }

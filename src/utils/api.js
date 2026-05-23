@@ -3,10 +3,10 @@ export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzXM2X88G_b6PGlc
 
 export const getDirectImageUrl = (url) => {
   if (!url) return '';
-  // แปลงลิงก์ Drive ธรรมดาให้เป็นลิงก์สำหรับแสดงรูปภาพโดยตรง
+  // ใช้ Thumbnail API ของ Google Drive ซึ่งเสถียรกว่าและไม่ค่อยติดปัญหาบล็อกรูปภาพ
   const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
   if (match && match[1]) {
-    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
   }
   return url;
 };

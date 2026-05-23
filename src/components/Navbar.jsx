@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { Package, CheckCircle, ClipboardList, FileText, LogOut } from 'lucide-react';
+import { Package, CheckCircle, ClipboardList, FileText, LogOut, Lock } from 'lucide-react';
 
-export default function Navbar({ onLogout }) {
+export default function Navbar({ onLogout, onChangePassword }) {
   return (
     <nav className="navbar">
       <div className="nav-brand">
@@ -21,6 +21,9 @@ export default function Navbar({ onLogout }) {
         <NavLink to="/admin/report" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <FileText size={20} /> พิมพ์รายงาน
         </NavLink>
+        <button className="nav-item text-muted" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }} onClick={onChangePassword}>
+          <Lock size={20} /> รหัสผ่าน
+        </button>
         <button className="nav-item text-danger" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }} onClick={onLogout}>
           <LogOut size={20} /> ออกระบบ
         </button>

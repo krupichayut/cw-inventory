@@ -91,5 +91,15 @@ export const api = {
     }
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'fulfillRequest', requestId }) });
     return await res.json();
+  },
+
+  async adjustStock(itemId, quantity) {
+    if (useMock) {
+      const inv = mockInventory.find(i => i.ID === itemId);
+      if (inv) inv.Balance += parseInt(quantity);
+      return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
+    }
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adjustStock', itemId, quantity }) });
+    return await res.json();
   }
 };

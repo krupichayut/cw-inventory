@@ -6,11 +6,12 @@ import Requisition from './pages/Requisition';
 import Fulfillment from './pages/Fulfillment';
 import StockTake from './pages/StockTake';
 import Report from './pages/Report';
-import { Package, User, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { Package, User, ShieldAlert, ArrowLeft, Lock } from 'lucide-react';
 import './App.css';
 
 function App() {
   const [isAdminAuth, setIsAdminAuth] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   return (
     <div className="app-container">
@@ -31,7 +32,7 @@ function App() {
         <Route path="/admin/*" element={
           isAdminAuth ? (
             <>
-              <Navbar onLogout={() => setIsAdminAuth(false)} />
+              <Navbar onLogout={() => setIsAdminAuth(false)} onChangePassword={() => setShowPasswordModal(true)} />
               <main className="main-content animate-fade-in">
                 <Routes>
                   <Route path="/" element={<Inventory />} />
@@ -41,6 +42,7 @@ function App() {
                   <Route path="*" element={<Navigate to="/admin" />} />
                 </Routes>
               </main>
+              {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
             </>
           ) : (
             <AdminLogin onLogin={() => setIsAdminAuth(true)} />
@@ -95,10 +97,11 @@ function AdminLogin({ onLogin }) {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (pin === '1234') { // รหัสผ่าน Admin ค่าเริ่มต้น
+    const savedPin = localStorage.getItem('adminPin') || '1234';
+    if (pin === savedPin) { 
       onLogin();
     } else {
-      alert('รหัสผ่านไม่ถูกต้อง (รหัสเริ่มต้นคือ 1234)');
+      alert('รหัสผ่านไม่ถูกต้อง');
     }
   };
 
@@ -120,6 +123,49 @@ function AdminLogin({ onLogin }) {
           <div className="flex" style={{ display: 'flex', gap: '1rem' }}>
              <button type="button" className="btn btn-ghost flex-1" style={{width: '100%'}} onClick={() => navigate('/')}>ยกเลิก</button>
              <button type="submit" className="btn btn-secondary flex-1" style={{width: '100%'}}>เข้าสู่ระบบ</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ChangePasswordModal({ onClose }) {
+  const [currentPin, setCurrentPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    const savedPin = localStorage.getItem('adminPin') || '1234';
+    if (currentPin !== savedPin) {
+      alert('รหัสผ่านเดิมไม่ถูกต้อง');
+      return;
+    }
+    if (newPin.trim() === '') {
+      alert('กรุณาตั้งรหัสผ่านใหม่');
+      return;
+    }
+    localStorage.setItem('adminPin', newPin);
+    alert('เปลี่ยนรหัสผ่านสำเร็จ');
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
+        <h2><Lock size={24} className="inline-icon" /> เปลี่ยนรหัสผ่าน Admin</h2>
+        <form onSubmit={handleSave}>
+          <div className="form-group">
+            <label>รหัสผ่านปัจจุบัน</label>
+            <input type="password" required value={currentPin} onChange={e => setCurrentPin(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>รหัสผ่านใหม่</label>
+            <input type="password" required value={newPin} onChange={e => setNewPin(e.target.value)} />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>ยกเลิก</button>
+            <button type="submit" className="btn btn-primary">บันทึกรหัสผ่าน</button>
           </div>
         </form>
       </div>

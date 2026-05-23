@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
-import { Plus, Search, AlertTriangle, Image as ImageIcon } from 'lucide-react';
+import { Plus, Search, AlertTriangle, Image as ImageIcon, PackagePlus } from 'lucide-react';
 import './Inventory.css';
 
 export default function Inventory() {
@@ -10,6 +10,7 @@ export default function Inventory() {
   const [showModal, setShowModal] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '' });
   const [uploading, setUploading] = useState(false);
+  const [adjustModal, setAdjustModal] = useState({ show: false, item: null, qty: 1 });
 
   const loadData = async () => {
     setLoading(true);
@@ -46,6 +47,19 @@ export default function Inventory() {
       });
       setShowModal(false);
       setNewItem({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '' });
+      loadData();
+    } catch (e) {
+      alert('Error: ' + e);
+    }
+    setUploading(false);
+  };
+
+  const submitAdjustStock = async (e) => {
+    e.preventDefault();
+    setUploading(true);
+    try {
+      await api.adjustStock(adjustModal.item.ID, parseInt(adjustModal.qty));
+      setAdjustModal({ show: false, item: null, qty: 1 });
       loadData();
     } catch (e) {
       alert('Error: ' + e);
@@ -111,6 +125,15 @@ export default function Inventory() {
                     </div>
                   </div>
                 </div>
+                <div style={{ padding: '1rem', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'center' }}>
+                  <button 
+                    className={`btn ${isLow ? 'btn-primary' : 'btn-ghost'}`} 
+                    style={{ width: '100%' }}
+                    onClick={() => setAdjustModal({ show: true, item: item, qty: 1 })}
+                  >
+                    <PackagePlus size={18} /> เติมสต๊อก
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -143,6 +166,34 @@ export default function Inventory() {
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>ยกเลิก</button>
                 <button type="submit" className="btn btn-primary" disabled={uploading}>
                   {uploading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {adjustModal.show && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
+            <h2>เติมสต๊อกพัสดุ</h2>
+            <p className="text-muted" style={{ marginBottom: '1rem' }}>พัสดุ: <strong>{adjustModal.item.Name}</strong></p>
+            <form onSubmit={submitAdjustStock}>
+              <div className="form-group">
+                <label>จำนวนที่ต้องการเพิ่ม (ชิ้น)</label>
+                <input 
+                  type="number" 
+                  required 
+                  min="1" 
+                  value={adjustModal.qty} 
+                  onChange={e => setAdjustModal({...adjustModal, qty: e.target.value})} 
+                  style={{ fontSize: '1.25rem', padding: '0.75rem' }}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-ghost" onClick={() => setAdjustModal({ show: false, item: null, qty: 1 })}>ยกเลิก</button>
+                <button type="submit" className="btn btn-primary" disabled={uploading}>
+                  {uploading ? 'กำลังบันทึก...' : 'ยืนยันการเติมสต๊อก'}
                 </button>
               </div>
             </form>

@@ -19,7 +19,12 @@ let mockInventory = [
 ];
 
 let mockRequests = [
-  { RequestID: 'REQ-101', Date: new Date().toISOString(), Requester: 'คุณสมชาย', ItemID: 'ITM-1', Quantity: 5, Status: 'Pending' }
+  { RequestID: 'REQ-101', Date: new Date().toISOString(), Requester: 'คุณสมชาย', Department: 'วิชาการ', ItemID: 'ITM-1', Quantity: 5, Status: 'Pending' }
+];
+
+let mockDepartments = [
+  { ID: 'DEP-1', Name: 'บริหาร' },
+  { ID: 'DEP-2', Name: 'วิชาการ' }
 ];
 
 const useMock = !GAS_URL;
@@ -27,7 +32,7 @@ const useMock = !GAS_URL;
 export const api = {
   async getData() {
     if (useMock) {
-      return new Promise(resolve => setTimeout(() => resolve({ inventory: [...mockInventory], requests: [...mockRequests] }), 500));
+      return new Promise(resolve => setTimeout(() => resolve({ inventory: [...mockInventory], requests: [...mockRequests], departments: [...mockDepartments] }), 500));
     }
     const res = await fetch(`${GAS_URL}?action=getData`);
     return await res.json();
@@ -66,15 +71,15 @@ export const api = {
     return await res.json();
   },
 
-  async createRequest(requester, items) {
+  async createRequest(requester, department, items) {
     if (useMock) {
       const reqId = 'REQ-' + Date.now();
       items.forEach(it => {
-        mockRequests.push({ RequestID: reqId, Date: new Date().toISOString(), Requester: requester, ItemID: it.id, Quantity: it.quantity, Status: 'Pending' });
+        mockRequests.push({ RequestID: reqId, Date: new Date().toISOString(), Requester: requester, Department: department, ItemID: it.id, Quantity: it.quantity, Status: 'Pending' });
       });
       return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
     }
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'createRequest', requester, items }) });
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'createRequest', requester, department, items }) });
     return await res.json();
   },
 
@@ -118,6 +123,25 @@ export const api = {
   async deleteRequest(requestId) {
     if (useMock) return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteRequest', requestId }) });
+    return await res.json();
+  },
+
+  async addDepartment(name) {
+    if (useMock) {
+      const newId = 'DEP-' + Date.now();
+      mockDepartments.push({ ID: newId, Name: name });
+      return new Promise(resolve => setTimeout(() => resolve({ status: 'success', id: newId }), 500));
+    }
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addDepartment', name }) });
+    return await res.json();
+  },
+
+  async deleteDepartment(id) {
+    if (useMock) {
+      mockDepartments = mockDepartments.filter(d => d.ID !== id);
+      return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
+    }
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteDepartment', id }) });
     return await res.json();
   }
 };

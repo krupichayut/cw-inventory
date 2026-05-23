@@ -5,8 +5,10 @@ import './Requisition.css';
 
 export default function Requisition() {
   const [items, setItems] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [cart, setCart] = useState([]);
   const [requester, setRequester] = useState('');
+  const [department, setDepartment] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -15,6 +17,7 @@ export default function Requisition() {
       setLoading(true);
       const data = await api.getData();
       setItems(data.inventory.filter(i => parseInt(i.Balance) > 0)); // Only show items with stock
+      setDepartments(data.departments || []);
       setLoading(false);
     };
     loadData();
@@ -46,13 +49,15 @@ export default function Requisition() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (cart.length === 0) return alert('กรุณาเลือกพัสดุก่อนส่งคำขอ');
+    if (!department) return alert('กรุณาเลือกฝ่ายงานของคุณ');
     
     setSubmitting(true);
     try {
-      await api.createRequest(requester, cart);
+      await api.createRequest(requester, department, cart);
       alert('ส่งคำขอสำเร็จ รอแอดมินอนุมัติและจ่ายของ');
       setCart([]);
       setRequester('');
+      setDepartment('');
     } catch (e) {
       alert('Error: ' + e);
     }
@@ -89,10 +94,18 @@ export default function Requisition() {
               วันที่เบิก: {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
             <label>ชื่อผู้เบิก</label>
-            <input type="text" required value={requester} onChange={e => setRequester(e.target.value)} placeholder="ระบุชื่อของคุณ" />
+            <input type="text" required value={requester} onChange={e => setRequester(e.target.value)} placeholder="ระบุชื่อของคุณ" style={{ marginBottom: '1rem' }} />
+            
+            <label>ฝ่ายงาน</label>
+            <select required value={department} onChange={e => setDepartment(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+              <option value="" disabled>-- เลือกฝ่ายงาน --</option>
+              {departments.map(d => (
+                <option key={d.ID} value={d.Name}>{d.Name}</option>
+              ))}
+            </select>
           </div>
 
-          <div className="cart-items">
+          <div className="cart-items" style={{ marginTop: '1rem' }}>
             {cart.length === 0 ? <p className="text-muted">ยังไม่ได้เลือกพัสดุ</p> : (
               cart.map(c => (
                 <div key={c.id} className="cart-item">

@@ -6,6 +6,7 @@ import Requisition from './pages/Requisition';
 import Fulfillment from './pages/Fulfillment';
 import StockTake from './pages/StockTake';
 import Report from './pages/Report';
+import Departments from './pages/Departments';
 import { Package, User, ShieldAlert, ArrowLeft, Lock } from 'lucide-react';
 import './App.css';
 
@@ -38,6 +39,7 @@ function App() {
                   <Route path="/" element={<Inventory />} />
                   <Route path="/fulfillment" element={<Fulfillment />} />
                   <Route path="/stocktake" element={<StockTake />} />
+                  <Route path="/departments" element={<Departments />} />
                   <Route path="/report" element={<Report />} />
                   <Route path="*" element={<Navigate to="/admin" />} />
                 </Routes>

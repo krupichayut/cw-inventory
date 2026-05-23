@@ -53,6 +53,7 @@ export default function Fulfillment() {
         id: req.RequestID,
         date: new Date(req.Date).toLocaleString('th-TH'),
         requester: req.Requester,
+        department: req.Department || '-',
         status: req.Status,
         items: []
       };
@@ -84,7 +85,7 @@ export default function Fulfillment() {
                   <div className="req-header">
                     <div>
                       <div className="req-id">{req.id}</div>
-                      <div className="req-user">ผู้เบิก: {req.requester}</div>
+                      <div className="req-user">ผู้เบิก: {req.requester} <span className="text-muted text-sm">({req.department})</span></div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <button className="btn-ghost text-danger" onClick={() => handleDeleteRequest(req.id, false)} style={{ padding: '0.25rem', marginBottom: '0.5rem' }}>
@@ -124,7 +125,7 @@ export default function Fulfillment() {
                 <div key={req.id} className="req-card card">
                   <div className="req-header" style={{ alignItems: 'flex-start' }}>
                     <div>
-                      <div className="req-user">{req.requester}</div>
+                      <div className="req-user">{req.requester} <span className="text-muted text-sm">({req.department})</span></div>
                       <div className="badge-success mt-1">จ่ายแล้ว</div>
                     </div>
                     <button className="btn-ghost text-danger" onClick={() => handleDeleteRequest(req.id, true)} style={{ padding: '0.25rem' }}>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../utils/api';
+import { api, getDirectImageUrl } from '../utils/api';
 import { ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import './Requisition.css';
 
@@ -67,7 +67,7 @@ export default function Requisition() {
           <div className="item-list">
             {items.map(item => (
               <div key={item.ID} className="list-card glass-panel">
-                <img src={item.ImageURL || 'https://via.placeholder.com/60'} alt={item.Name} className="list-img" />
+                <img src={item.ImageURL ? getDirectImageUrl(item.ImageURL) : 'https://via.placeholder.com/60'} alt={item.Name} className="list-img" />
                 <div className="list-info" style={{ width: '100%' }}>
                   <h4 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{item.Name}</h4>
                   <div style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px', display: 'inline-block', fontWeight: 'bold' }}>

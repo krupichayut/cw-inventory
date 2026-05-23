@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../utils/api';
+import { api, getDirectImageUrl } from '../utils/api';
 import { Plus, Search, AlertTriangle, Image as ImageIcon } from 'lucide-react';
 import './Inventory.css';
 
@@ -84,7 +84,7 @@ export default function Inventory() {
               <div key={item.ID} className={`card item-card ${isLow ? 'low-stock-card' : ''}`}>
                 <div className="item-img-container">
                   {item.ImageURL ? (
-                    <img src={item.ImageURL} alt={item.Name} className="item-img" />
+                    <img src={getDirectImageUrl(item.ImageURL)} alt={item.Name} className="item-img" />
                   ) : (
                     <div className="no-img"><ImageIcon size={40} /></div>
                   )}

@@ -1,6 +1,16 @@
 // ใส่ Web App URL ที่ได้จากการ Deploy Google Apps Script
 export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzXM2X88G_b6PGlcB9fjJ9frOhcUkA-WYvbmmKH1sWs9eqGb1eIKGZmy11ChbbpNy0/exec'; 
 
+export const getDirectImageUrl = (url) => {
+  if (!url) return '';
+  // แปลงลิงก์ Drive ธรรมดาให้เป็นลิงก์สำหรับแสดงรูปภาพโดยตรง
+  const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  if (match && match[1]) {
+    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+  }
+  return url;
+};
+
 // Mock Data for development and demonstration
 let mockInventory = [
   { ID: 'ITM-1', Name: 'กระดาษ A4', ImageURL: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=300&q=80', Balance: 50, MinStock: 20, Category: 'เครื่องใช้สำนักงาน' },

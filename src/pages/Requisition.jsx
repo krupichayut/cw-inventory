@@ -195,7 +195,7 @@ export default function Requisition() {
             <button className="btn btn-ghost" onClick={() => setCurrentStep(2)} disabled={submitting} style={{ padding: '0.75rem 2rem' }}>
               <ArrowLeft size={20} className="inline-icon" /> แก้ไขรายการ
             </button>
-            <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting} style={{ padding: '0.75rem 3rem', fontSize: '1.1rem', background: 'var(--success)', borderColor: 'var(--success)' }}>
+            <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting} style={{ padding: '0.75rem 3rem', fontSize: '1.1rem', background: 'var(--secondary)', borderColor: 'var(--secondary)' }}>
               {submitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขอเบิก'}
             </button>
           </div>

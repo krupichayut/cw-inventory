@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import { Users, Plus, Trash2 } from 'lucide-react';
+import { Users, Plus, Trash2, Edit } from 'lucide-react';
 import './Inventory.css'; // Reuse inventory css for grid
 
 export default function Departments() {
@@ -40,6 +40,22 @@ export default function Departments() {
       loadData();
     }
     setProcessing(false);
+  };
+
+  const handleEdit = async (dept) => {
+    const newName = window.prompt('แก้ไขชื่อฝ่ายงาน:', dept.Name);
+    if (!newName || newName.trim() === '' || newName === dept.Name) return;
+
+    // Optimistic Update
+    setDepartments(departments.map(d => d.ID === dept.ID ? { ...d, Name: newName } : d));
+    
+    try {
+      await api.updateDepartment(dept.ID, newName);
+      loadData();
+    } catch (e) {
+      alert('Error: ' + e);
+      loadData();
+    }
   };
 
   const handleDelete = async (id) => {
@@ -88,9 +104,14 @@ export default function Departments() {
               {departments.map(dept => (
                 <div key={dept.ID} className="glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem' }}>
                   <span style={{ fontSize: '1.1rem', fontWeight: '500' }}>{dept.Name}</span>
-                  <button className="btn-ghost text-danger" onClick={() => handleDelete(dept.ID)} style={{ padding: '0.5rem' }}>
-                    <Trash2 size={18} />
-                  </button>
+                  <div>
+                    <button className="btn-ghost text-primary" onClick={() => handleEdit(dept)} style={{ padding: '0.5rem', marginRight: '0.5rem' }}>
+                      <Edit size={18} />
+                    </button>
+                    <button className="btn-ghost text-danger" onClick={() => handleDelete(dept.ID)} style={{ padding: '0.5rem' }}>
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -136,6 +136,15 @@ export const api = {
     return await res.json();
   },
 
+  async updateDepartment(id, name) {
+    if (useMock) {
+      mockDepartments = mockDepartments.map(d => d.ID === id ? { ...d, Name: name } : d);
+      return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
+    }
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'updateDepartment', id, name }) });
+    return await res.json();
+  },
+
   async deleteDepartment(id) {
     if (useMock) {
       mockDepartments = mockDepartments.filter(d => d.ID !== id);

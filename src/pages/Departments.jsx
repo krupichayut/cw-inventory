@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { Users, Plus, Trash2, Edit } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './Inventory.css'; // Reuse inventory css for grid
 
 export default function Departments() {
@@ -34,9 +35,10 @@ export default function Departments() {
     try {
       await api.addDepartment(newDept);
       setNewDept('');
+      toast.success('เพิ่มฝ่ายงานสำเร็จ');
       loadData();
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
       loadData();
     }
     setProcessing(false);
@@ -51,9 +53,10 @@ export default function Departments() {
     
     try {
       await api.updateDepartment(dept.ID, newName);
+      toast.success('แก้ไขชื่อฝ่ายงานสำเร็จ');
       loadData();
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
       loadData();
     }
   };
@@ -66,9 +69,10 @@ export default function Departments() {
     
     try {
       await api.deleteDepartment(id);
+      toast.success('ลบฝ่ายงานสำเร็จ');
       loadData();
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
       loadData();
     }
   };

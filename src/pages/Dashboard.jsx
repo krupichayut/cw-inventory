@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { LayoutDashboard, Package, AlertTriangle, Clock, TrendingUp, Activity } from 'lucide-react';
-import './Inventory.css'; // Reuse styles
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import './Inventory.css';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -83,7 +84,29 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return <div className="animate-fade-in text-center" style={{ padding: '3rem' }}>กำลังโหลดข้อมูลสถิติ...</div>;
+    return (
+      <div className="dashboard-page animate-fade-in" style={{ paddingBottom: '2rem' }}>
+        <div className="page-header">
+          <div style={{ width: '250px', height: '40px', background: 'var(--bg-surface-solid)', borderRadius: '8px', animation: 'pulse 1.5s infinite' }}></div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} className="glass-panel" style={{ height: '100px', animation: 'pulse 1.5s infinite', background: 'var(--bg-surface-solid)', opacity: 0.7 }}></div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
+          <div className="glass-panel" style={{ height: '350px', animation: 'pulse 1.5s infinite', background: 'var(--bg-surface-solid)', opacity: 0.7 }}></div>
+          <div className="glass-panel" style={{ height: '350px', animation: 'pulse 1.5s infinite', background: 'var(--bg-surface-solid)', opacity: 0.7 }}></div>
+        </div>
+        <style>{`
+          @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0.6; }
+          }
+        `}</style>
+      </div>
+    );
   }
 
   const getTxColor = (type) => {
@@ -159,7 +182,7 @@ export default function Dashboard() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
         
-        {/* --- TOP ITEMS CHART --- */}
+        {/* --- TOP ITEMS CHART (Recharts) --- */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <TrendingUp size={20} className="text-primary"/> พัสดุเบิกสูงสุด (ประจำเดือน)
@@ -168,24 +191,22 @@ export default function Dashboard() {
           {topItems.length === 0 ? (
             <p className="text-center text-muted" style={{ padding: '2rem 0' }}>ยังไม่มีการเบิกพัสดุในเดือนนี้</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {topItems.map((item, idx) => (
-                <div key={item.id}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
-                    <span style={{ fontWeight: '500' }}>{idx + 1}. {item.name}</span>
-                    <span style={{ fontWeight: 'bold' }}>{item.count} ชิ้น</span>
-                  </div>
-                  <div style={{ width: '100%', height: '12px', background: 'var(--bg-base)', borderRadius: '6px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      width: `${item.pct}%`, 
-                      height: '100%', 
-                      background: `linear-gradient(90deg, var(--primary-light) 0%, var(--primary) 100%)`,
-                      borderRadius: '6px',
-                      transition: 'width 1s ease-out'
-                    }}></div>
-                  </div>
-                </div>
-              ))}
+            <div style={{ width: '100%', height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topItems} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={100} style={{ fontSize: '0.85rem' }} />
+                  <Tooltip 
+                    cursor={{fill: 'rgba(0,0,0,0.02)'}}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }}
+                  />
+                  <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20}>
+                    {topItems.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={`var(--primary)`} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
         </div>

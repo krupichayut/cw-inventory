@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './Requisition.css';
 
 export default function Requisition() {
@@ -48,12 +49,12 @@ export default function Requisition() {
   const remove = (id) => setCart(cart.filter(c => c.id !== id));
 
   const handleNextStep1 = () => {
-    if (!requester.trim() || !department) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+    if (!requester.trim() || !department) return toast.error('กรุณากรอกข้อมูลให้ครบถ้วน');
     setCurrentStep(2);
   };
 
   const handleNextStep2 = () => {
-    if (cart.length === 0) return alert('กรุณาเลือกพัสดุอย่างน้อย 1 รายการ');
+    if (cart.length === 0) return toast.error('กรุณาเลือกพัสดุอย่างน้อย 1 รายการ');
     setCurrentStep(3);
   };
 
@@ -61,13 +62,13 @@ export default function Requisition() {
     setSubmitting(true);
     try {
       await api.createRequest(requester, department, cart);
-      alert('ส่งคำขอสำเร็จ รอแอดมินอนุมัติและจ่ายของ');
+      toast.success('ส่งคำขอสำเร็จ รอแอดมินอนุมัติและจ่ายของ', { duration: 4000 });
       setCart([]);
       setRequester('');
       setDepartment('');
       setCurrentStep(1);
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
     }
     setSubmitting(false);
   };

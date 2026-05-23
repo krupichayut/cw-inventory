@@ -9,6 +9,7 @@ import StockTake from './pages/StockTake';
 import Report from './pages/Report';
 import Departments from './pages/Departments';
 import { Package, User, ShieldAlert, ArrowLeft, Lock } from 'lucide-react';
+import { Toaster, toast } from 'react-hot-toast';
 import './App.css';
 
 function App() {
@@ -53,6 +54,12 @@ function App() {
           )
         } />
       </Routes>
+      <Toaster 
+        position="bottom-right" 
+        toastOptions={{ 
+          style: { background: 'var(--bg-surface-solid)', color: 'var(--text-main)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)' }
+        }} 
+      />
     </div>
   );
 }
@@ -103,9 +110,10 @@ function AdminLogin({ onLogin }) {
     e.preventDefault();
     const savedPin = localStorage.getItem('adminPin') || '1234';
     if (pin === savedPin) { 
+      toast.success('เข้าสู่ระบบสำเร็จ');
       onLogin();
     } else {
-      alert('รหัสผ่านไม่ถูกต้อง');
+      toast.error('รหัสผ่านไม่ถูกต้อง');
     }
   };
 
@@ -142,15 +150,15 @@ function ChangePasswordModal({ onClose }) {
     e.preventDefault();
     const savedPin = localStorage.getItem('adminPin') || '1234';
     if (currentPin !== savedPin) {
-      alert('รหัสผ่านเดิมไม่ถูกต้อง');
+      toast.error('รหัสผ่านเดิมไม่ถูกต้อง');
       return;
     }
     if (newPin.trim() === '') {
-      alert('กรุณาตั้งรหัสผ่านใหม่');
+      toast.error('กรุณาตั้งรหัสผ่านใหม่');
       return;
     }
     localStorage.setItem('adminPin', newPin);
-    alert('เปลี่ยนรหัสผ่านสำเร็จ');
+    toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
     onClose();
   };
 

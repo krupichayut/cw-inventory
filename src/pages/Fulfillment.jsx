@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { CheckCircle, Clock, Package, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './Fulfillment.css';
 
 export default function Fulfillment() {
@@ -23,10 +24,10 @@ export default function Fulfillment() {
     setProcessing(requestId);
     try {
       await api.fulfillRequest(requestId);
-      alert('จ่ายของและตัดสต๊อกเรียบร้อย');
+      toast.success('จ่ายของและตัดสต๊อกเรียบร้อย', { duration: 3000 });
       loadData();
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
     }
     setProcessing(null);
   };

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
 import { Plus, Search, AlertTriangle, Image as ImageIcon, PackagePlus, Edit, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './Inventory.css';
 
 export default function Inventory() {
@@ -48,9 +49,10 @@ export default function Inventory() {
       });
       setShowModal(false);
       setNewItem({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '' });
+      toast.success('เพิ่มพัสดุใหม่สำเร็จ');
       loadData();
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
     }
     setUploading(false);
   };
@@ -66,8 +68,9 @@ export default function Inventory() {
     
     try {
       await api.adjustStock(targetId, qty);
+      toast.success('อัปเดตสต๊อกสำเร็จ');
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
       loadData(); // Revert on failure
     }
   };
@@ -89,8 +92,9 @@ export default function Inventory() {
 
     try {
       await api.updateItem(updatedData);
+      toast.success('แก้ไขข้อมูลสำเร็จ');
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
       loadData();
     }
     setUploading(false);
@@ -104,8 +108,9 @@ export default function Inventory() {
     
     try {
       await api.deleteItem(id);
+      toast.success('ลบพัสดุสำเร็จ');
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + e);
       loadData();
     }
   };

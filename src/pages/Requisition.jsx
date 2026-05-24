@@ -26,6 +26,11 @@ export default function Requisition() {
       setLoading(false);
     };
     loadData();
+
+    const savedName = localStorage.getItem('requesterName');
+    const savedDept = localStorage.getItem('requesterDepartment');
+    if (savedName) setRequester(savedName);
+    if (savedDept) setDepartment(savedDept);
   }, []);
 
   const addToCart = (item, qtyToAdd = 1) => {
@@ -55,6 +60,18 @@ export default function Requisition() {
     }));
   };
 
+  const setQty = (id, newQ) => {
+    setCart(cart.map(c => {
+      if (c.id === id) {
+        if (newQ === '' || isNaN(newQ)) return { ...c, quantity: '' };
+        const val = parseInt(newQ);
+        if (val > 0 && val <= c.max) return { ...c, quantity: val };
+        if (val > c.max) return { ...c, quantity: c.max };
+      }
+      return c;
+    }));
+  };
+
   const remove = (id) => setCart(cart.filter(c => c.id !== id));
 
   const handleNextStep1 = () => {
@@ -69,12 +86,12 @@ export default function Requisition() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    localStorage.setItem('requesterName', requester);
+    localStorage.setItem('requesterDepartment', department);
     try {
       await api.createRequest(requester, department, cart);
       toast.success('ส่งคำขอสำเร็จ รอแอดมินอนุมัติและจ่ายของ', { duration: 4000 });
       setCart([]);
-      setRequester('');
-      setDepartment('');
       setCurrentStep(1);
     } catch (e) {
       toast.error('Error: ' + e);
@@ -161,7 +178,16 @@ export default function Requisition() {
                     </div>
                     <div className="cart-controls" style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center' }}>
                       <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, -1)}><Minus size={16} /></button>
-                      <span className="qty" style={{ width: '40px', textAlign: 'center' }}>{c.quantity}</span>
+                      <input 
+                        type="number" 
+                        className="qty-input" 
+                        style={{ width: '50px', textAlign: 'center', border: '1px solid var(--border-light)', borderRadius: '4px', padding: '2px' }} 
+                        value={c.quantity} 
+                        onChange={(e) => setQty(c.id, e.target.value)}
+                        onBlur={(e) => {
+                          if (c.quantity === '' || c.quantity < 1) setQty(c.id, 1);
+                        }}
+                      />
                       <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, 1)}><Plus size={16} /></button>
                       <span className="text-muted" style={{ fontSize: '0.85rem', marginLeft: '0.5rem', flex: 1 }}>{c.baseUnit}</span>
                       <button type="button" className="ctrl-btn text-danger ml-2" onClick={() => remove(c.id)}><Trash2 size={16} /></button>

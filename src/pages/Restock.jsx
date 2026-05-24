@@ -49,6 +49,17 @@ export default function Restock() {
     }
   };
 
+  const setQty = (id, newQ) => {
+    setCart(cart.map(item => {
+      if (item.id === id) {
+        if (newQ === '' || isNaN(newQ)) return { ...item, quantity: '' };
+        const val = parseInt(newQ);
+        if (val > 0) return { ...item, quantity: val };
+      }
+      return item;
+    }));
+  };
+
   const remove = (id) => setCart(cart.filter(c => c.id !== id));
 
   const handleSubmit = async () => {
@@ -134,7 +145,7 @@ export default function Restock() {
                 </div>
                 <div className="cart-controls" style={{ marginTop: '0.5rem' }}>
                   <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, c.quantity - 1)}><Minus size={16} /></button>
-                  <input type="number" className="qty-input" value={c.quantity} onChange={(e) => updateQty(c.id, parseInt(e.target.value) || 1)} min="1" />
+                  <input type="number" className="qty-input" value={c.quantity} onChange={(e) => setQty(c.id, e.target.value)} onBlur={(e) => { if (c.quantity === '' || c.quantity < 1) setQty(c.id, 1); }} min="1" />
                   <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, c.quantity + 1)}><Plus size={16} /></button>
                   <span className="text-muted" style={{ fontSize: '0.85rem', flex: 1 }}>{c.baseUnit}</span>
                   <button type="button" className="ctrl-btn text-danger" onClick={() => remove(c.id)}><Trash2 size={16} /></button>

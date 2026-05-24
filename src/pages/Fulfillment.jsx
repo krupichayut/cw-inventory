@@ -42,7 +42,7 @@ export default function Fulfillment() {
   };
 
   const handleDeleteRequest = async (requestId, isFulfilled) => {
-    if (!window.confirm('คุณแน่ใจหรือไม่ที่จะลบรายการเบิกนี้?' + (isFulfilled ? '\n\n(ระบบจะคำนวณและคืนสต๊อกกลับเข้าคลังให้อัตโนมัติ)' : ''))) return;
+    if (!window.confirm('คุณแน่ใจหรือไม่ที่จะลบรายการเบิกนี้?' + (isFulfilled ? '\n\n(คำเตือน: การลบรายการนี้จะไม่ส่งผลต่อจำนวนสต๊อกในคลัง หากพบข้อผิดพลาด กรุณาไปแก้ไขสต๊อกเองที่เมนูคลังพัสดุ)' : ''))) return;
     
     // Optimistic Update
     setRequests(requests.filter(r => r.RequestID !== requestId));

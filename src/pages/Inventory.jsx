@@ -228,8 +228,15 @@ export default function Inventory() {
                 <input type="text" required value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} />
               </div>
               <div className="form-group">
-                <label>หมวดหมู่ (เช่น เครื่องเขียน)</label>
-                <input type="text" required value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} />
+                <label>หมวดหมู่</label>
+                <select required value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                  <option value="">-- เลือกหมวดหมู่ --</option>
+                  <option value="หมวดเครื่องเขียนและอุปกรณ์สำนักงาน">หมวดเครื่องเขียนและอุปกรณ์สำนักงาน</option>
+                  <option value="หมวดอุปกรณ์อิเล็กทรอนิกส์และไอที">หมวดอุปกรณ์อิเล็กทรอนิกส์และไอที</option>
+                  <option value="หมวดผลิตภัณฑ์กระดาษและซอง">หมวดผลิตภัณฑ์กระดาษและซอง</option>
+                  <option value="หมวดผลิตภัณฑ์และอุปกรณ์ทำความสะอาด">หมวดผลิตภัณฑ์และอุปกรณ์ทำความสะอาด</option>
+                  <option value="อื่นๆ">อื่นๆ</option>
+                </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
@@ -326,8 +333,15 @@ export default function Inventory() {
                 <input type="text" required value={editModal.name} onChange={e => setEditModal({...editModal, name: e.target.value})} />
               </div>
               <div className="form-group">
-                <label>หมวดหมู่ (เช่น เครื่องเขียน)</label>
-                <input type="text" required value={editModal.category} onChange={e => setEditModal({...editModal, category: e.target.value})} />
+                <label>หมวดหมู่</label>
+                <select required value={editModal.category} onChange={e => setEditModal({...editModal, category: e.target.value})} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                  <option value="">-- เลือกหมวดหมู่ --</option>
+                  <option value="หมวดเครื่องเขียนและอุปกรณ์สำนักงาน">หมวดเครื่องเขียนและอุปกรณ์สำนักงาน</option>
+                  <option value="หมวดอุปกรณ์อิเล็กทรอนิกส์และไอที">หมวดอุปกรณ์อิเล็กทรอนิกส์และไอที</option>
+                  <option value="หมวดผลิตภัณฑ์กระดาษและซอง">หมวดผลิตภัณฑ์กระดาษและซอง</option>
+                  <option value="หมวดผลิตภัณฑ์และอุปกรณ์ทำความสะอาด">หมวดผลิตภัณฑ์และอุปกรณ์ทำความสะอาด</option>
+                  <option value="อื่นๆ">อื่นๆ</option>
+                </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">

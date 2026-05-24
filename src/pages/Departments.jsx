@@ -10,6 +10,7 @@ export default function Departments() {
   const [newDept, setNewDept] = useState('');
   const [newDeptOrder, setNewDeptOrder] = useState(999);
   const [processing, setProcessing] = useState(false);
+  const [editModal, setEditModal] = useState({ show: false, id: '', name: '', order: 999 });
 
   const loadData = async () => {
     setLoading(true);
@@ -48,28 +49,30 @@ export default function Departments() {
     setProcessing(false);
   };
 
-  const handleEdit = async (dept) => {
-    const newName = window.prompt('แก้ไขชื่อฝ่ายงาน:', dept.Name);
-    if (newName === null) return;
-    
-    const newOrderStr = window.prompt('แก้ไขลำดับ (เลขยิ่งน้อยยิ่งขึ้นก่อน):', dept.Order || 999);
-    if (newOrderStr === null) return;
-    
-    const newOrder = parseInt(newOrderStr) || 999;
+  const handleEditClick = (dept) => {
+    setEditModal({ show: true, id: dept.ID, name: dept.Name, order: dept.Order || 999 });
+  };
 
-    if (newName.trim() === '' || (newName === dept.Name && newOrder === dept.Order)) return;
+  const submitEdit = async (e) => {
+    e.preventDefault();
+    if (!editModal.name.trim()) return;
+    setProcessing(true);
+
+    const newOrder = parseInt(editModal.order) || 999;
 
     // Optimistic Update
-    setDepartments(departments.map(d => d.ID === dept.ID ? { ...d, Name: newName, Order: newOrder } : d).sort((a,b)=>(a.Order||999)-(b.Order||999)));
+    setDepartments(departments.map(d => d.ID === editModal.id ? { ...d, Name: editModal.name, Order: newOrder } : d).sort((a,b)=>(a.Order||999)-(b.Order||999)));
     
     try {
-      await api.updateDepartment(dept.ID, newName, newOrder);
-      toast.success('แก้ไขชื่อฝ่ายงานสำเร็จ');
+      await api.updateDepartment(editModal.id, editModal.name, newOrder);
+      toast.success('แก้ไขฝ่ายงานสำเร็จ');
+      setEditModal({ show: false, id: '', name: '', order: 999 });
       loadData();
     } catch (e) {
       toast.error('Error: ' + e);
       loadData();
     }
+    setProcessing(false);
   };
 
   const handleDelete = async (id) => {
@@ -131,7 +134,7 @@ export default function Departments() {
                     <span style={{ fontSize: '1.1rem', fontWeight: '500' }}>{dept.Name}</span>
                   </div>
                   <div>
-                    <button className="btn-ghost text-primary" onClick={() => handleEdit(dept)} style={{ padding: '0.5rem', marginRight: '0.5rem' }}>
+                    <button className="btn-ghost text-primary" onClick={() => handleEditClick(dept)} style={{ padding: '0.5rem', marginRight: '0.5rem' }}>
                       <Edit size={18} />
                     </button>
                     <button className="btn-ghost text-danger" onClick={() => handleDelete(dept.ID)} style={{ padding: '0.5rem' }}>
@@ -142,6 +145,39 @@ export default function Departments() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editModal.show && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
+            <h2 style={{ marginBottom: '1.5rem' }}>แก้ไขฝ่ายงาน</h2>
+            <form onSubmit={submitEdit}>
+              <div className="form-group">
+                <label>ชื่อฝ่ายงาน</label>
+                <input 
+                  type="text" 
+                  value={editModal.name} 
+                  onChange={e => setEditModal({...editModal, name: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>ลำดับ (เลขน้อยขึ้นก่อน)</label>
+                <input 
+                  type="number" 
+                  value={editModal.order} 
+                  onChange={e => setEditModal({...editModal, order: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="modal-actions" style={{ marginTop: '2rem' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setEditModal({ show: false, id: '', name: '', order: 999 })}>ยกเลิก</button>
+                <button type="submit" className="btn btn-primary" disabled={processing}>บันทึกการแก้ไข</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

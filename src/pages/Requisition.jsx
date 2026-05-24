@@ -160,11 +160,11 @@ export default function Requisition() {
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
                       <button className="btn btn-primary" onClick={() => addToCart(item, 1)} style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
-                        <Plus size={16} className="inline-icon" /> 1 {item.BaseUnit || 'ชิ้น'}
+                        เลือก
                       </button>
                       {item.PackUnit && item.PackSize > 1 && (
                         <button className="btn btn-ghost" onClick={() => addToCart(item, item.PackSize)} style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', border: '1px solid var(--primary)', color: 'var(--primary)' }}>
-                          <Plus size={16} className="inline-icon" /> 1 {item.PackUnit}
+                          เลือกแบบ{item.PackUnit}
                         </button>
                       )}
                     </div>

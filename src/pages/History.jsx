@@ -8,6 +8,7 @@ import './History.css';
 export default function History() {
   const [transactions, setTransactions] = useState([]);
   const [inventoryMap, setInventoryMap] = useState({});
+  const [requestsMap, setRequestsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
@@ -21,6 +22,10 @@ export default function History() {
       const invMap = {};
       (data.inventory || []).forEach(i => invMap[i.ID] = i.Name);
       setInventoryMap(invMap);
+      
+      const reqMap = {};
+      (data.requests || []).forEach(r => reqMap[r.RequestID] = r.Requester);
+      setRequestsMap(reqMap);
       
       const sortedTx = (data.transactions || []).sort((a, b) => new Date(b.Date) - new Date(a.Date));
       setTransactions(sortedTx);
@@ -165,9 +170,9 @@ export default function History() {
                   </td>
                   <td>
                     {tx.RestockerName && <div style={{ fontSize: '0.85rem' }}>ผู้รับเข้า: {tx.RestockerName}</div>}
-                    {tx.RequesterName && <div style={{ fontSize: '0.85rem' }}>ผู้เบิก: {tx.RequesterName}</div>}
+                    {(tx.RequesterName || requestsMap[tx.RefReqID]) && <div style={{ fontSize: '0.85rem' }}>ผู้เบิก: {tx.RequesterName || requestsMap[tx.RefReqID]}</div>}
                     {tx.FulfillerName && <div style={{ fontSize: '0.85rem' }}>ผู้จ่าย: {tx.FulfillerName}</div>}
-                    {!tx.RestockerName && !tx.FulfillerName && !tx.RequesterName && '-'}
+                    {!tx.RestockerName && !tx.FulfillerName && !tx.RequesterName && !requestsMap[tx.RefReqID] && '-'}
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     {tx.ReceiptURL ? (

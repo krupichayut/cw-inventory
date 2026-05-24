@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [topItems, setTopItems] = useState([]);
   const [recentTx, setRecentTx] = useState([]);
   const [inventoryMap, setInventoryMap] = useState({});
+  const [requestsMap, setRequestsMap] = useState({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -46,6 +47,10 @@ export default function Dashboard() {
         // 2. Request Stats
         const reqs = data.requests || [];
         const pendingReqs = reqs.filter(r => r.Status === 'Pending').length;
+        
+        const reqMap = {};
+        reqs.forEach(r => reqMap[r.RequestID] = r.Requester);
+        setRequestsMap(reqMap);
         
         // 3. Transaction Stats (This Month)
         const tx = data.transactions || [];
@@ -238,7 +243,7 @@ export default function Dashboard() {
                         <Clock size={12} className="inline-icon" /> 
                         {formatDateTimeThai(tx.Date)} 
                         {tx.FulfillerName && ` • จ่ายโดย: ${tx.FulfillerName}`}
-                        {tx.RequesterName && ` • เบิกโดย: ${tx.RequesterName}`}
+                        {(tx.RequesterName || requestsMap[tx.RefReqID]) && ` • เบิกโดย: ${tx.RequesterName || requestsMap[tx.RefReqID]}`}
                         {tx.RestockerName && ` • รับเข้าโดย: ${tx.RestockerName}`}
                       </div>
                     </div>

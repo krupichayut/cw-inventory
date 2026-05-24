@@ -43,10 +43,12 @@ export const api = {
         return gasData;
       }
 
-      // ถ้ามีข้อมูลแล้ว ดึงส่วนที่เหลือให้ครบ
-      const reqSnap = await getDocs(collection(db, 'requests'));
-      const depSnap = await getDocs(collection(db, 'departments'));
-      const txSnap = await getDocs(collection(db, 'transactions'));
+      // ถ้ามีข้อมูลแล้ว ดึงส่วนที่เหลือพร้อมกันทั้งหมดเพื่อความเร็ว (Promise.all)
+      const [reqSnap, depSnap, txSnap] = await Promise.all([
+        getDocs(collection(db, 'requests')),
+        getDocs(collection(db, 'departments')),
+        getDocs(collection(db, 'transactions'))
+      ]);
       
       let requests = []; reqSnap.forEach(d => requests.push(d.data()));
       let departments = []; depSnap.forEach(d => departments.push(d.data()));

@@ -272,7 +272,7 @@ export default function Inventory() {
 
       {editModal.show && (
         <div className="modal-overlay">
-          <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
+          <div className="modal-content glass-panel animate-fade-in">
             <h2>แก้ไขข้อมูลพัสดุ</h2>
             <form onSubmit={handleEditItem}>
               <div className="form-group">

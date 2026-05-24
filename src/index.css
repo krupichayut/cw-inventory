@@ -2,48 +2,48 @@
 
 :root {
   /* Colors - Luxurious Blue & White Theme */
-  --bg-base: #f4f7fb;
-  --bg-gradient: linear-gradient(135deg, #f4f7fb 0%, #ffffff 100%);
-  --bg-surface: rgba(255, 255, 255, 0.85);
+  --bg-base: #f8fafc;
+  --bg-gradient: radial-gradient(circle at top left, #f0f9ff 0%, #f8fafc 50%, #e0f2fe 100%);
+  --bg-surface: rgba(255, 255, 255, 0.7);
   --bg-surface-solid: #ffffff;
   
-  --primary: #0A3D91; /* Premium Royal Blue */
-  --primary-hover: #1550B5;
-  --primary-light: #E6EEF9;
+  --primary: #0ea5e9; /* Modern Sky Blue */
+  --primary-hover: #0284c7;
+  --primary-light: #e0f2fe;
   
-  --secondary: #059669;
-  --secondary-hover: #047857;
-  --secondary-light: #D1FAE5;
+  --secondary: #10b981; /* Emerald */
+  --secondary-hover: #059669;
+  --secondary-light: #d1fae5;
   
-  --danger: #DC2626;
-  --danger-hover: #B91C1C;
-  --danger-light: #FEE2E2;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --danger-light: #fee2e2;
 
-  --warning: #D97706;
-  --warning-hover: #B45309;
-  --warning-light: #FEF3C7;
+  --warning: #f59e0b;
+  --warning-hover: #d97706;
+  --warning-light: #fef3c7;
 
-  --text-main: #111827;
-  --text-muted: #6B7280;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
   --text-inverse: #ffffff;
 
-  --border-light: rgba(10, 61, 145, 0.08);
+  --border-light: rgba(14, 165, 233, 0.15);
   
   /* Radii - Smooth and elegant */
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
   --radius-full: 9999px;
 
-  /* Shadows - Premium, soft, multi-layered with a hint of blue */
-  --shadow-sm: 0 2px 4px rgba(10, 61, 145, 0.02), 0 1px 2px rgba(10, 61, 145, 0.03);
-  --shadow-md: 0 4px 12px rgba(10, 61, 145, 0.04), 0 2px 4px rgba(10, 61, 145, 0.02);
-  --shadow-lg: 0 12px 24px rgba(10, 61, 145, 0.06), 0 4px 8px rgba(10, 61, 145, 0.03);
-  --shadow-glass: 0 8px 32px rgba(10, 61, 145, 0.05);
+  /* Shadows - Premium, soft, multi-layered */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 4px 16px rgba(14, 165, 233, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 20px 40px rgba(14, 165, 233, 0.12), 0 8px 16px rgba(15, 23, 42, 0.06);
+  --shadow-glass: 0 8px 32px rgba(14, 165, 233, 0.08);
   
   /* Transitions */
-  --transition-fast: 0.2s ease-out;
-  --transition-normal: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.15s ease-out;
+  --transition-normal: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -152,12 +152,21 @@ input, select, textarea {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(15px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
   animation: fadeIn var(--transition-normal) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Layout */

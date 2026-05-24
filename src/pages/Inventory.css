@@ -139,9 +139,11 @@
 
 .modal-content {
   background: var(--bg-surface-solid);
-  padding: 2rem;
+  padding: 2.5rem;
   width: 100%;
-  max-width: 500px;
+  max-width: 650px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-content h2 {
@@ -160,17 +162,22 @@
 }
 
 .form-group input[type="text"],
-.form-group input[type="number"] {
+.form-group input[type="number"],
+.form-group input[type="file"] {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.85rem;
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   outline: none;
-  transition: border-color var(--transition-fast);
+  background: var(--bg-base);
+  transition: all var(--transition-fast);
+  font-size: 1rem;
 }
 
 .form-group input:focus {
   border-color: var(--primary);
+  background: var(--bg-surface-solid);
+  box-shadow: 0 0 0 4px var(--primary-light);
 }
 
 .preview-img {

@@ -4,9 +4,9 @@ import { LayoutDashboard, Package, CheckCircle, ClipboardList, FileText, LogOut,
 export default function Navbar({ onLogout, onChangePassword }) {
   return (
     <nav className="navbar">
-      <div className="nav-brand" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <img src="/logo.jpg" alt="โรงเรียนไชยาวิทยา" style={{ height: '36px', width: '36px', objectFit: 'contain', borderRadius: '50%' }} />
-        <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>ระบบพัสดุ (Admin)</span>
+      <div className="nav-brand">
+        <img src="/logo.jpg" alt="โรงเรียนไชยาวิทยา" className="sidebar-logo" />
+        <span className="brand-text">ระบบพัสดุ (Admin)</span>
       </div>
       <div className="nav-links">
         <NavLink to="/admin" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>

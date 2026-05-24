@@ -75,7 +75,7 @@ function Landing() {
   return (
     <div className="landing-page flex items-center justify-center min-h-screen">
       <div className="glass-panel text-center p-8 animate-fade-in" style={{ maxWidth: '500px', margin: '0 auto', marginTop: '10vh' }}>
-        <img src="/logo.jpg" alt="โรงเรียนไชยาวิทยา" style={{ width: '100px', height: '100px', objectFit: 'contain', margin: '0 auto 1.5rem auto', borderRadius: '50%' }} />
+        <img src="/logo.jpg" alt="โรงเรียนไชยาวิทยา" style={{ width: '130px', height: '130px', objectFit: 'cover', margin: '0 auto 1.5rem auto', borderRadius: '50%', boxShadow: 'var(--shadow-md)', border: '4px solid white' }} />
         <h1 className="page-title" style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>ระบบพัสดุโรงเรียนไชยาวิทยา</h1>
         <p className="text-muted mb-6">กรุณาเลือกรูปแบบการเข้าใช้งาน</p>
         
@@ -100,9 +100,9 @@ function RequesterHeader() {
   return (
     <nav className="navbar" style={{ justifyContent: 'flex-start', gap: '1rem' }}>
       <button className="btn btn-ghost" onClick={() => navigate('/')}><ArrowLeft size={20}/> กลับ</button>
-      <div className="nav-brand" style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <img src="/logo.jpg" alt="โรงเรียนไชยาวิทยา" style={{ height: '32px', width: '32px', objectFit: 'contain', borderRadius: '50%' }} />
-        <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>เบิกพัสดุ - โรงเรียนไชยาวิทยา</span>
+      <div className="nav-brand" style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <img src="/logo.jpg" alt="โรงเรียนไชยาวิทยา" style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '50%', boxShadow: 'var(--shadow-sm)', border: '2px solid white' }} />
+        <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>เบิกพัสดุ - โรงเรียนไชยาวิทยา</span>
       </div>
     </nav>
   );

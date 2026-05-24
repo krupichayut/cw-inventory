@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../utils/api';
 import { UserCog, Plus, Trash2, Edit, ShieldAlert, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -155,7 +156,7 @@ export default function StaffSettings() {
       </div>
 
       {/* Add Modal */}
-      {addModal.show && (
+      {addModal.show && createPortal(
         <div className="modal-overlay">
           <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
             <h2><UserCog size={24} className="inline-icon" /> เพิ่มเจ้าหน้าที่ใหม่</h2>
@@ -200,11 +201,12 @@ export default function StaffSettings() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Modal */}
-      {editModal.show && (
+      {editModal.show && createPortal(
         <div className="modal-overlay">
           <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
             <h2><Edit size={24} className="inline-icon" /> แก้ไขข้อมูลเจ้าหน้าที่</h2>
@@ -246,7 +248,8 @@ export default function StaffSettings() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

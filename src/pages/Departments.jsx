@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../utils/api';
 import { Users, Plus, Trash2, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -182,7 +183,7 @@ export default function Departments() {
       )}
 
       {/* Edit Modal */}
-      {editModal.show && (
+      {editModal.show && createPortal(
         <div className="modal-overlay">
           <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
             <h2 style={{ marginBottom: '1.5rem' }}>แก้ไขฝ่ายงาน</h2>
@@ -211,7 +212,8 @@ export default function Departments() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

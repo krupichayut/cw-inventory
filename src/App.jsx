@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
@@ -234,7 +235,7 @@ function ChangePasswordModal({ onClose }) {
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay">
       <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
         <h2><Lock size={24} className="inline-icon" /> เปลี่ยนรหัสผ่าน Admin</h2>
@@ -253,7 +254,8 @@ function ChangePasswordModal({ onClose }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

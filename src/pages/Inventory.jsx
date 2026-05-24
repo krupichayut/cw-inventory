@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api, getDirectImageUrl } from '../utils/api';
 import { Plus, Search, AlertTriangle, Image as ImageIcon, PackagePlus, Edit, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -215,7 +216,7 @@ export default function Inventory() {
         </div>
       )}
 
-      {showModal && (
+      {showModal && createPortal(
         <div className="modal-overlay">
           <div className="modal-content glass-panel animate-fade-in">
             <h2>เพิ่มพัสดุใหม่</h2>
@@ -270,10 +271,11 @@ export default function Inventory() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {adjustModal.show && (
+      {adjustModal.show && createPortal(
         <div className="modal-overlay">
           <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '450px' }}>
             <h2>จัดการสต๊อกพัสดุ</h2>
@@ -322,10 +324,11 @@ export default function Inventory() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {editModal.show && (
+      {editModal.show && createPortal(
         <div className="modal-overlay">
           <div className="modal-content glass-panel animate-fade-in">
             <h2>แก้ไขข้อมูลพัสดุ</h2>
@@ -377,7 +380,8 @@ export default function Inventory() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       
       <ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} />

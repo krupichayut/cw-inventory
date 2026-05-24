@@ -202,26 +202,26 @@ export default function Inventory() {
                 {newItem.imageUrl && <img src={newItem.imageUrl} className="preview-img" alt="preview" />}
               </div>
               <div className="form-group">
-                <label>ชื่อพัสดุ</label>
+                <label>ชื่อพัสดุ (เช่น กระดาษ A4)</label>
                 <input type="text" required value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} />
               </div>
               <div className="form-group">
-                <label>หมวดหมู่</label>
+                <label>หมวดหมู่ (เช่น เครื่องเขียน)</label>
                 <input type="text" required value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label>จำนวนสต๊อกขั้นต่ำ</label>
+                  <label>แจ้งเตือนเมื่อของเหลือน้อยกว่า</label>
                   <input type="number" required value={newItem.minStock} onChange={e => setNewItem({...newItem, minStock: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>ลำดับ (เลขยิ่งน้อยยิ่งขึ้นก่อน)</label>
+                  <label>ลำดับแสดงผล (1 ขึ้นก่อน)</label>
                   <input type="number" required value={newItem.order} onChange={e => setNewItem({...newItem, order: e.target.value})} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label>หน่วยย่อย (เช่น ชิ้น)</label>
+                  <label>หน่วยนับ (เช่น ด้าม)</label>
                   <input type="text" required value={newItem.baseUnit} onChange={e => setNewItem({...newItem, baseUnit: e.target.value})} />
                 </div>
                 <div className="form-group">
@@ -229,7 +229,7 @@ export default function Inventory() {
                   <input type="text" placeholder="เช่น กล่อง" value={newItem.packUnit} onChange={e => setNewItem({...newItem, packUnit: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>จำนวน/แพ็ค</label>
+                  <label>1 แพ็คมีกี่ชิ้น?</label>
                   <input type="number" min="1" value={newItem.packSize} onChange={e => setNewItem({...newItem, packSize: parseInt(e.target.value)})} disabled={!newItem.packUnit} />
                 </div>
               </div>
@@ -276,26 +276,26 @@ export default function Inventory() {
             <h2>แก้ไขข้อมูลพัสดุ</h2>
             <form onSubmit={handleEditItem}>
               <div className="form-group">
-                <label>ชื่อพัสดุ</label>
+                <label>ชื่อพัสดุ (เช่น กระดาษ A4)</label>
                 <input type="text" required value={editModal.name} onChange={e => setEditModal({...editModal, name: e.target.value})} />
               </div>
               <div className="form-group">
-                <label>หมวดหมู่</label>
+                <label>หมวดหมู่ (เช่น เครื่องเขียน)</label>
                 <input type="text" required value={editModal.category} onChange={e => setEditModal({...editModal, category: e.target.value})} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label>จุดวิกฤต (Min Stock)</label>
+                  <label>แจ้งเตือนเมื่อของเหลือน้อยกว่า</label>
                   <input type="number" required min="0" value={editModal.minStock} onChange={e => setEditModal({...editModal, minStock: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>ลำดับ (Order)</label>
+                  <label>ลำดับแสดงผล (1 ขึ้นก่อน)</label>
                   <input type="number" required value={editModal.order} onChange={e => setEditModal({...editModal, order: parseInt(e.target.value)})} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label>หน่วยย่อย (เช่น ชิ้น)</label>
+                  <label>หน่วยนับ (เช่น ด้าม)</label>
                   <input type="text" required value={editModal.baseUnit} onChange={e => setEditModal({...editModal, baseUnit: e.target.value})} />
                 </div>
                 <div className="form-group">
@@ -303,7 +303,7 @@ export default function Inventory() {
                   <input type="text" placeholder="เช่น กล่อง" value={editModal.packUnit} onChange={e => setEditModal({...editModal, packUnit: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>จำนวน/แพ็ค</label>
+                  <label>1 แพ็คมีกี่ชิ้น?</label>
                   <input type="number" min="1" value={editModal.packSize} onChange={e => setEditModal({...editModal, packSize: parseInt(e.target.value)})} disabled={!editModal.packUnit} />
                 </div>
               </div>

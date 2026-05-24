@@ -144,7 +144,11 @@ export default function Inventory() {
       </div>
 
       {loading ? (
-        <div className="loading">กำลังโหลดข้อมูล...</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="skeleton" style={{ height: '60px', width: '100%' }}></div>
+          ))}
+        </div>
       ) : (
         <table className="inventory-table">
           <thead>
@@ -176,7 +180,10 @@ export default function Inventory() {
                   </td>
                   <td>{item.Name}</td>
                   <td>{item.Category}</td>
-                  <td className="text-right">{item.Balance}</td>
+                  <td className="text-right">
+                    {isLow && <AlertTriangle size={14} className="text-danger" style={{ marginRight: '6px', verticalAlign: '-2px' }} title="พัสดุใกล้หมด" />}
+                    {item.Balance}
+                  </td>
                   <td className="text-right">{item.MinStock}</td>
                   <td>{item.BaseUnit || 'ชิ้น'}</td>
                   <td className="text-center" style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>

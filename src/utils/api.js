@@ -3,6 +3,10 @@ import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc } from '
 
 export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzXM2X88G_b6PGlcB9fjJ9frOhcUkA-WYvbmmKH1sWs9eqGb1eIKGZmy11ChbbpNy0/exec';
 
+let cacheData = null;
+let lastFetchTime = 0;
+const CACHE_TTL = 30000;
+
 export const getDirectImageUrl = (url) => {
   if (!url) return '';
   const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -21,8 +25,18 @@ const backupToGAS = (payload) => {
 };
 
 export const api = {
-  async getData() {
+  clearCache: () => {
+    cacheData = null;
+    lastFetchTime = 0;
+  },
+
+  async getData(forceRefetch = false) {
     try {
+      const now = Date.now();
+      if (!forceRefetch && cacheData && (now - lastFetchTime < CACHE_TTL)) {
+        return cacheData;
+      }
+
       // 1. เร็วดั่งสายฟ้า: ดึงข้อมูลจาก Firebase ก่อนเลย
       const invSnap = await getDocs(collection(db, 'inventory'));
       let inventory = [];
@@ -40,6 +54,8 @@ export const api = {
         for(let dep of gasData.departments || []) await setDoc(doc(db, 'departments', dep.ID), dep);
         for(let tx of gasData.transactions || []) await setDoc(doc(db, 'transactions', tx.TxID), tx);
         
+        cacheData = gasData;
+        lastFetchTime = Date.now();
         return gasData;
       }
 
@@ -54,7 +70,11 @@ export const api = {
       let departments = []; depSnap.forEach(d => departments.push(d.data()));
       let transactions = []; txSnap.forEach(d => transactions.push(d.data()));
 
-      return { inventory, requests, departments, transactions };
+      const result = { inventory, requests, departments, transactions };
+      cacheData = result;
+      lastFetchTime = Date.now();
+
+      return result;
     } catch (e) {
       console.error("Firebase Error, falling back to GAS:", e);
       const res = await fetch(`${GAS_URL}?action=getData`);
@@ -104,6 +124,7 @@ export const api = {
       };
       await setDoc(doc(db, 'inventory', data.id), itemData);
     }
+    api.clearCache();
     return data;
   },
 
@@ -121,12 +142,14 @@ export const api = {
     });
     // 2. ยิงแบ็กอัปไป GAS (เงียบๆ)
     backupToGAS({ action: 'updateItem', ...item });
+    api.clearCache();
     return { status: 'success' };
   },
 
   async deleteItem(id) {
     await deleteDoc(doc(db, 'inventory', id));
     backupToGAS({ action: 'deleteItem', id });
+    api.clearCache();
     return { status: 'success' };
   },
 
@@ -143,6 +166,7 @@ export const api = {
         await setDoc(doc(db, 'requests', req.RequestID), req);
       }
     }
+    api.clearCache();
     return data;
   },
 
@@ -174,12 +198,14 @@ export const api = {
     }
     // 2. แบ็กอัปไป GAS
     backupToGAS({ action: 'fulfillRequest', requestId, fulfillerName });
+    api.clearCache();
     return { status: 'success' };
   },
 
   async deleteRequest(requestId) {
     await deleteDoc(doc(db, 'requests', requestId));
     backupToGAS({ action: 'deleteRequest', requestId });
+    api.clearCache();
     return { status: 'success' };
   },
 
@@ -194,12 +220,14 @@ export const api = {
        await setDoc(doc(db, 'transactions', txData.TxID), txData);
     }
     backupToGAS({ action: 'adjustStock', itemId, quantity });
+    api.clearCache();
     return { status: 'success' };
   },
 
   async deleteTransaction(txId) {
     await deleteDoc(doc(db, 'transactions', txId));
     backupToGAS({ action: 'deleteTransaction', txId });
+    api.clearCache();
     return { status: 'success' };
   },
 
@@ -226,6 +254,7 @@ export const api = {
       }
     }
     backupToGAS({ action: 'batchRestock', items, restockerName, receiptUrl });
+    api.clearCache();
     return { status: 'success' };
   },
 
@@ -235,18 +264,21 @@ export const api = {
     if (data.status === 'success' && data.id) {
       await setDoc(doc(db, 'departments', data.id), { ID: data.id, Name: name, Order: order || 999 });
     }
+    api.clearCache();
     return data;
   },
 
   async updateDepartment(id, name, order) {
     await updateDoc(doc(db, 'departments', id), { Name: name, Order: order || 999 });
     backupToGAS({ action: 'updateDepartment', id, name, order });
+    api.clearCache();
     return { status: 'success' };
   },
 
   async deleteDepartment(id) {
     await deleteDoc(doc(db, 'departments', id));
     backupToGAS({ action: 'deleteDepartment', id });
+    api.clearCache();
     return { status: 'success' };
   }
 };

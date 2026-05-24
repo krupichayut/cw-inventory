@@ -1,19 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Colors - Luxurious Blue & White Theme */
-  --bg-base: #f8fafc;
-  --bg-gradient: radial-gradient(circle at top left, #f0f9ff 0%, #f8fafc 50%, #e0f2fe 100%);
-  --bg-surface: rgba(255, 255, 255, 0.7);
+  /* Colors - Analogous Cool Theme (Figma Guidelines) */
+  --bg-base: #f0fdfa; /* Soft Teal background */
+  --bg-gradient: radial-gradient(circle at top right, #e0f2fe 0%, #f0fdfa 50%, #f8fafc 100%);
+  --bg-surface: rgba(255, 255, 255, 0.75);
   --bg-surface-solid: #ffffff;
   
-  --primary: #0ea5e9; /* Modern Sky Blue */
-  --primary-hover: #0284c7;
+  --primary: #0284c7; /* Ocean Blue (Primary 10%) */
+  --primary-hover: #0369a1;
   --primary-light: #e0f2fe;
   
-  --secondary: #10b981; /* Emerald */
-  --secondary-hover: #059669;
-  --secondary-light: #d1fae5;
+  --secondary: #0d9488; /* Teal (Analogous Accent) */
+  --secondary-hover: #0f766e;
+  --secondary-light: #ccfbf1;
   
   --danger: #ef4444;
   --danger-hover: #dc2626;
@@ -110,6 +110,7 @@ input, select, textarea {
   border-radius: var(--radius-md);
   font-weight: 500;
   font-size: 0.875rem;
+  min-height: 44px; /* Fitts's Law touch target minimum */
 }
 
 .btn-primary {
@@ -161,12 +162,42 @@ input, select, textarea {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .animate-fade-in {
   animation: fadeIn var(--transition-normal) forwards;
 }
 
 .animate-slide-up {
   animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-base) 25%, var(--primary-light) 50%, var(--bg-base) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite ease-in-out;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-text {
+  height: 1.25rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+
+.skeleton-title {
+  height: 2rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Layout */

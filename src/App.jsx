@@ -15,7 +15,9 @@ import { Toaster, toast } from 'react-hot-toast';
 import './App.css';
 
 function App() {
-  const [isAdminAuth, setIsAdminAuth] = useState(false);
+  const [isAdminAuth, setIsAdminAuth] = useState(() => {
+    return localStorage.getItem('isAdminAuth') === 'true';
+  });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   return (
@@ -36,8 +38,8 @@ function App() {
         {/* สำหรับ Admin */}
         <Route path="/admin/*" element={
           isAdminAuth ? (
-            <>
-              <Navbar onLogout={() => setIsAdminAuth(false)} onChangePassword={() => setShowPasswordModal(true)} />
+            <div className="admin-layout">
+              <Navbar onLogout={() => { localStorage.removeItem('isAdminAuth'); setIsAdminAuth(false); }} onChangePassword={() => setShowPasswordModal(true)} />
               <main className="main-content animate-fade-in">
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
@@ -52,7 +54,7 @@ function App() {
                 </Routes>
               </main>
               {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
-            </>
+            </div>
           ) : (
             <AdminLogin onLogin={() => setIsAdminAuth(true)} />
           )
@@ -114,6 +116,7 @@ function AdminLogin({ onLogin }) {
     e.preventDefault();
     const savedPin = localStorage.getItem('adminPin') || '1234';
     if (pin === savedPin) { 
+      localStorage.setItem('isAdminAuth', 'true');
       toast.success('เข้าสู่ระบบสำเร็จ');
       onLogin();
     } else {

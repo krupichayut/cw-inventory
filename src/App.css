@@ -1,5 +1,5 @@
 /* App specific styles go here */
-.app-container {
+.app-container, .admin-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -106,5 +106,40 @@
   }
   .grid {
     grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+  }
+}
+
+/* Desktop Sidebar Layout */
+@media (min-width: 1024px) {
+  .admin-layout {
+    flex-direction: row;
+  }
+  .admin-layout .navbar {
+    width: 260px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 2rem 1.5rem;
+    border-right: 1px solid var(--border-light);
+    border-bottom: none;
+    overflow-y: auto;
+  }
+  .admin-layout .nav-brand {
+    margin-bottom: 2rem;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .admin-layout .nav-links {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+  .admin-layout .nav-item {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
   }
 }

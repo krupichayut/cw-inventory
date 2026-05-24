@@ -87,24 +87,17 @@ export default function Dashboard() {
     return (
       <div className="dashboard-page animate-fade-in" style={{ paddingBottom: '2rem' }}>
         <div className="page-header">
-          <div style={{ width: '250px', height: '40px', background: 'var(--bg-surface-solid)', borderRadius: '8px', animation: 'pulse 1.5s infinite' }}></div>
+          <div className="skeleton" style={{ width: '250px', height: '40px' }}></div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
           {[1,2,3,4].map(i => (
-            <div key={i} className="glass-panel" style={{ height: '100px', animation: 'pulse 1.5s infinite', background: 'var(--bg-surface-solid)', opacity: 0.7 }}></div>
+            <div key={i} className="glass-panel skeleton" style={{ height: '100px' }}></div>
           ))}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
-          <div className="glass-panel" style={{ height: '350px', animation: 'pulse 1.5s infinite', background: 'var(--bg-surface-solid)', opacity: 0.7 }}></div>
-          <div className="glass-panel" style={{ height: '350px', animation: 'pulse 1.5s infinite', background: 'var(--bg-surface-solid)', opacity: 0.7 }}></div>
+          <div className="glass-panel skeleton" style={{ height: '350px' }}></div>
+          <div className="glass-panel skeleton" style={{ height: '350px' }}></div>
         </div>
-        <style>{`
-          @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 0.3; }
-            100% { opacity: 0.6; }
-          }
-        `}</style>
       </div>
     );
   }

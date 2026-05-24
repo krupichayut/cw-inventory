@@ -227,18 +227,18 @@ export const api = {
     return { status: 'success' };
   },
 
-  async addDepartment(name) {
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addDepartment', name }) });
+  async addDepartment(name, order) {
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addDepartment', name, order }) });
     const data = await res.json();
     if (data.status === 'success' && data.id) {
-      await setDoc(doc(db, 'departments', data.id), { ID: data.id, Name: name });
+      await setDoc(doc(db, 'departments', data.id), { ID: data.id, Name: name, Order: order || 999 });
     }
     return data;
   },
 
-  async updateDepartment(id, name) {
-    await updateDoc(doc(db, 'departments', id), { Name: name });
-    backupToGAS({ action: 'updateDepartment', id, name });
+  async updateDepartment(id, name, order) {
+    await updateDoc(doc(db, 'departments', id), { Name: name, Order: order || 999 });
+    backupToGAS({ action: 'updateDepartment', id, name, order });
     return { status: 'success' };
   },
 

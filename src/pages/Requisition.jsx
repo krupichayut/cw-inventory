@@ -22,7 +22,7 @@ export default function Requisition() {
         .filter(i => parseInt(i.Balance) > 0)
         .sort((a, b) => (a.Order || 999) - (b.Order || 999))
       );
-      setDepartments(data.departments || []);
+      setDepartments((data.departments || []).sort((a, b) => (a.Order || 999) - (b.Order || 999)));
       setLoading(false);
     };
     loadData();

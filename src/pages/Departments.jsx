@@ -8,13 +8,15 @@ export default function Departments() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newDept, setNewDept] = useState('');
+  const [newDeptOrder, setNewDeptOrder] = useState(999);
   const [processing, setProcessing] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const data = await api.getData();
-      setDepartments(data.departments || []);
+      const sorted = (data.departments || []).sort((a, b) => (a.Order || 999) - (b.Order || 999));
+      setDepartments(sorted);
     } catch (e) {
       console.error(e);
     }
@@ -30,11 +32,13 @@ export default function Departments() {
     
     // Optimistic Update
     const tempId = 'TEMP-' + Date.now();
-    setDepartments([...departments, { ID: tempId, Name: newDept }]);
+    const newOrder = parseInt(newDeptOrder) || 999;
+    setDepartments([...departments, { ID: tempId, Name: newDept, Order: newOrder }].sort((a,b)=>a.Order-b.Order));
     
     try {
-      await api.addDepartment(newDept);
+      await api.addDepartment(newDept, newOrder);
       setNewDept('');
+      setNewDeptOrder(999);
       toast.success('เพิ่มฝ่ายงานสำเร็จ');
       loadData();
     } catch (e) {
@@ -46,13 +50,20 @@ export default function Departments() {
 
   const handleEdit = async (dept) => {
     const newName = window.prompt('แก้ไขชื่อฝ่ายงาน:', dept.Name);
-    if (!newName || newName.trim() === '' || newName === dept.Name) return;
+    if (newName === null) return;
+    
+    const newOrderStr = window.prompt('แก้ไขลำดับ (เลขยิ่งน้อยยิ่งขึ้นก่อน):', dept.Order || 999);
+    if (newOrderStr === null) return;
+    
+    const newOrder = parseInt(newOrderStr) || 999;
+
+    if (newName.trim() === '' || (newName === dept.Name && newOrder === dept.Order)) return;
 
     // Optimistic Update
-    setDepartments(departments.map(d => d.ID === dept.ID ? { ...d, Name: newName } : d));
+    setDepartments(departments.map(d => d.ID === dept.ID ? { ...d, Name: newName, Order: newOrder } : d).sort((a,b)=>(a.Order||999)-(b.Order||999)));
     
     try {
-      await api.updateDepartment(dept.ID, newName);
+      await api.updateDepartment(dept.ID, newName, newOrder);
       toast.success('แก้ไขชื่อฝ่ายงานสำเร็จ');
       loadData();
     } catch (e) {
@@ -90,6 +101,14 @@ export default function Departments() {
             placeholder="ชื่อฝ่ายงานใหม่..." 
             value={newDept} 
             onChange={e => setNewDept(e.target.value)} 
+            style={{ flex: 2, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}
+            required
+          />
+          <input 
+            type="number" 
+            placeholder="ลำดับ (Order)" 
+            value={newDeptOrder} 
+            onChange={e => setNewDeptOrder(e.target.value)} 
             style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}
             required
           />
@@ -107,7 +126,10 @@ export default function Departments() {
             <div className="list-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {departments.map(dept => (
                 <div key={dept.ID} className="glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem' }}>
-                  <span style={{ fontSize: '1.1rem', fontWeight: '500' }}>{dept.Name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ background: 'var(--bg-base)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>ลำดับ: {dept.Order || 999}</span>
+                    <span style={{ fontSize: '1.1rem', fontWeight: '500' }}>{dept.Name}</span>
+                  </div>
                   <div>
                     <button className="btn-ghost text-primary" onClick={() => handleEdit(dept)} style={{ padding: '0.5rem', marginRight: '0.5rem' }}>
                       <Edit size={18} />

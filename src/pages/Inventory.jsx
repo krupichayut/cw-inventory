@@ -46,10 +46,10 @@ export default function Inventory() {
         minStock: parseInt(newItem.minStock),
         category: newItem.category,
         imageUrl: uploadedUrl,
-        order: newItem.order,
+        order: parseInt(newItem.order),
         baseUnit: newItem.baseUnit,
         packUnit: newItem.packUnit,
-        packSize: newItem.packSize
+        packSize: parseInt(newItem.packSize)
       });
       setShowModal(false);
       setNewItem({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '', order: 999, baseUnit: 'ชิ้น', packUnit: '', packSize: 1 });
@@ -215,8 +215,8 @@ export default function Inventory() {
                   <input type="number" required value={newItem.minStock} onChange={e => setNewItem({...newItem, minStock: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>ลำดับ (Order)</label>
-                  <input type="number" required value={newItem.order} onChange={e => setNewItem({...newItem, order: parseInt(e.target.value)})} />
+                  <label>ลำดับ (เลขยิ่งน้อยยิ่งขึ้นก่อน)</label>
+                  <input type="number" required value={newItem.order} onChange={e => setNewItem({...newItem, order: e.target.value})} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>

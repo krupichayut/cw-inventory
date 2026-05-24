@@ -47,7 +47,7 @@
   height: 40px;
   width: 40px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 8px;
   box-shadow: var(--shadow-sm);
   border: 2px solid white;
   transition: all var(--transition-normal);

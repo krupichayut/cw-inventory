@@ -16,7 +16,7 @@ import './App.css';
 
 function App() {
   const [isAdminAuth, setIsAdminAuth] = useState(() => {
-    return sessionStorage.getItem('isAdminAuth') === 'true';
+    return localStorage.getItem('isAdminAuth') === 'true';
   });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -39,7 +39,7 @@ function App() {
         <Route path="/admin/*" element={
           isAdminAuth ? (
             <>
-              <Navbar onLogout={() => { sessionStorage.removeItem('isAdminAuth'); setIsAdminAuth(false); }} onChangePassword={() => setShowPasswordModal(true)} />
+              <Navbar onLogout={() => { localStorage.removeItem('isAdminAuth'); setIsAdminAuth(false); }} onChangePassword={() => setShowPasswordModal(true)} />
               <main className="main-content animate-fade-in">
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
@@ -116,7 +116,7 @@ function AdminLogin({ onLogin }) {
     e.preventDefault();
     const savedPin = localStorage.getItem('adminPin') || '1234';
     if (pin === savedPin) { 
-      sessionStorage.setItem('isAdminAuth', 'true');
+      localStorage.setItem('isAdminAuth', 'true');
       toast.success('เข้าสู่ระบบสำเร็จ');
       onLogin();
     } else {

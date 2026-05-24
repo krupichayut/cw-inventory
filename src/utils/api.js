@@ -9,10 +9,25 @@ const CACHE_TTL = 30000;
 
 export const getDirectImageUrl = (url) => {
   if (!url) return '';
-  const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-  if (match && match[1]) {
-    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+  
+  // รองรับลิงก์ Google Drive หลายรูปแบบ
+  let fileId = null;
+  
+  // รูปแบบ 1: /file/d/ID/view
+  const matchD = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  if (matchD && matchD[1]) fileId = matchD[1];
+  
+  // รูปแบบ 2: ?id=ID (เช่น open?id= หรือ uc?id= หรือ thumbnail?id=)
+  if (!fileId) {
+    const matchId = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (matchId && matchId[1]) fileId = matchId[1];
   }
+
+  if (fileId) {
+    // ใช้ endpoint thumbnail ของ Google Drive (ดึงภาพความละเอียดสูง w1000)
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+  }
+  
   return url;
 };
 

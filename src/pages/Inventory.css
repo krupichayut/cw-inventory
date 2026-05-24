@@ -42,6 +42,15 @@
   transform: scale(1.05);
 }
 
+.table-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+}
+
 .no-img {
   width: 100%;
   height: 100%;

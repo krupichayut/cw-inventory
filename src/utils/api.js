@@ -228,17 +228,17 @@ export const api = {
     return { status: 'success' };
   },
 
-  async adjustStock(itemId, quantity) {
+  async adjustStock(itemId, quantity, type = 'In') {
     const invRef = doc(db, 'inventory', itemId);
     const invSnap = await getDoc(invRef);
     if (invSnap.exists()) {
        const currentBalance = parseInt(invSnap.data().Balance) || 0;
        await updateDoc(invRef, { Balance: currentBalance + parseInt(quantity) });
        
-       const txData = { TxID: 'TX-' + Date.now(), Date: new Date().toISOString(), Type: parseInt(quantity) > 0 ? 'In' : 'Adjust', ItemID: itemId, Quantity: Math.abs(parseInt(quantity)) };
+       const txData = { TxID: 'TX-' + Date.now(), Date: new Date().toISOString(), Type: type, ItemID: itemId, Quantity: Math.abs(parseInt(quantity)) };
        await setDoc(doc(db, 'transactions', txData.TxID), txData);
     }
-    backupToGAS({ action: 'adjustStock', itemId, quantity });
+    backupToGAS({ action: 'adjustStock', itemId, quantity, type });
     api.clearCache();
     return { status: 'success' };
   },

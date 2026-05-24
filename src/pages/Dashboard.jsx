@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
-import { LayoutDashboard, Package, AlertTriangle, Clock, TrendingUp, Activity } from 'lucide-react';
+import { LayoutDashboard, Package, AlertTriangle, Clock, TrendingUp, Activity, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import './Inventory.css';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalItems: 0,
@@ -12,6 +14,8 @@ export default function Dashboard() {
     pendingReqs: 0,
     monthlyOut: 0
   });
+  const [outOfStockList, setOutOfStockList] = useState([]);
+  const [lowStockList, setLowStockList] = useState([]);
   const [topItems, setTopItems] = useState([]);
   const [recentTx, setRecentTx] = useState([]);
   const [inventoryMap, setInventoryMap] = useState({});
@@ -29,7 +33,14 @@ export default function Dashboard() {
         setInventoryMap(invMap);
         
         const totalItems = inv.length;
-        const lowStock = inv.filter(i => parseInt(i.Balance) <= parseInt(i.MinStock)).length;
+        
+        const outOfStockItems = inv.filter(i => parseInt(i.Balance || 0) === 0);
+        const lowStockItems = inv.filter(i => parseInt(i.Balance || 0) > 0 && parseInt(i.Balance || 0) <= parseInt(i.MinStock || 0));
+        
+        setOutOfStockList(outOfStockItems);
+        setLowStockList(lowStockItems);
+        
+        const lowStock = outOfStockItems.length + lowStockItems.length;
         
         // 2. Request Stats
         const reqs = data.requests || [];
@@ -123,7 +134,7 @@ export default function Dashboard() {
       {/* --- STAT CARDS --- */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         
-        <div className="stat-card stat-primary">
+        <div className="stat-card stat-primary" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/inventory')}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '500' }}>พัสดุทั้งหมด</p>
@@ -135,7 +146,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card stat-danger">
+        <div className="stat-card stat-danger" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/inventory')}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '500' }}>พัสดุใกล้หมด</p>
@@ -147,7 +158,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card stat-warning">
+        <div className="stat-card stat-warning" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/requisition')}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '500' }}>รออนุมัติ</p>
@@ -159,7 +170,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card stat-secondary">
+        <div className="stat-card stat-secondary" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/history')}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '500' }}>จ่ายออกเดือนนี้ (ชิ้น)</p>
@@ -253,6 +264,52 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* --- LOW STOCK & OUT OF STOCK LISTS --- */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
+        
+        <div className="glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
+            <XCircle size={20} /> พัสดุของหมดแล้ว (Out of Stock)
+          </h3>
+          {outOfStockList.length === 0 ? (
+            <p className="text-center text-muted" style={{ padding: '2rem 0' }}>ไม่มีพัสดุที่ของหมด</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {outOfStockList.map(item => (
+                <li key={item.ID} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid var(--border-light)' }}>
+                  <span style={{ fontWeight: '500' }}>{item.Name}</span>
+                  <span className="text-danger" style={{ fontWeight: 'bold', background: 'var(--danger-light)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.85rem' }}>
+                    0 {item.BaseUnit}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--warning)' }}>
+            <AlertTriangle size={20} /> พัสดุใกล้หมด (Low Stock)
+          </h3>
+          {lowStockList.length === 0 ? (
+            <p className="text-center text-muted" style={{ padding: '2rem 0' }}>ไม่มีพัสดุที่ใกล้หมด</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {lowStockList.map(item => (
+                <li key={item.ID} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid var(--border-light)' }}>
+                  <span style={{ fontWeight: '500' }}>{item.Name}</span>
+                  <span className="text-warning" style={{ fontWeight: 'bold', background: 'var(--warning-light)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.85rem' }}>
+                    {item.Balance} {item.BaseUnit} (ขั้นต่ำ {item.MinStock})
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+      </div>
+
     </div>
   );
 }

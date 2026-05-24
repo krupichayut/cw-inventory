@@ -203,3 +203,72 @@
   gap: 1rem;
   margin-top: 2rem;
 }
+
+/* --- Table Redesign --- */
+.inventory-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 1.5rem;
+  background: var(--bg-surface-solid);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+.inventory-table th {
+  background: var(--bg-base);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: left;
+  padding: 1.25rem 1rem;
+  font-size: 0.95rem;
+  border-bottom: 2px solid var(--border-light);
+  white-space: nowrap;
+}
+
+.inventory-table td {
+  padding: 1.25rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 1.05rem;
+  transition: background var(--transition-fast);
+}
+
+.inventory-table tr:hover td {
+  background: rgba(14, 165, 233, 0.04);
+}
+
+.inventory-table .item-id {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: monospace;
+  background: var(--bg-base);
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.inventory-table td:nth-child(4) {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 1.1rem;
+}
+
+.inventory-table .text-right {
+  text-align: right;
+}
+
+.inventory-table .text-center {
+  text-align: center;
+}
+
+.low-stock td {
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.low-stock:hover td {
+  background: rgba(239, 68, 68, 0.06);
+}

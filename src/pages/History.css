@@ -1,0 +1,84 @@
+.history-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-surface-solid);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-group select, .filter-group input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.print-only-header {
+  display: none;
+}
+
+@media print {
+  body {
+    background: white !important;
+    margin: 0;
+  }
+  .no-print, .navbar, .page-header, .search-bar, .history-filters, .modal-overlay, .btn-ghost, button {
+    display: none !important;
+  }
+  .history-page {
+    padding: 0 !important;
+  }
+  .main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+  .glass-panel {
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+  .print-only-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .print-only-header h2 {
+    margin: 0 0 0.5rem 0;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .data-table th, .data-table td {
+    border: 1px solid #ddd !important;
+    padding: 10px !important;
+    color: black !important;
+  }
+  .data-table th {
+    background: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact;
+  }
+  .text-danger, .text-primary, .text-warning, .text-muted, .text-secondary {
+    color: black !important;
+  }
+  .data-table th:last-child, .data-table td:last-child {
+    display: none !important; /* Hide Delete column */
+  }
+  .data-table th:nth-last-child(2), .data-table td:nth-last-child(2) {
+    display: none !important; /* Hide Receipt column */
+  }
+}

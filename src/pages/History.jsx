@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
-import { Trash2, History as HistoryIcon, Search, Image as ImageIcon } from 'lucide-react';
+import { Trash2, History as HistoryIcon, Search, Image as ImageIcon, Printer, Filter, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
+import './History.css';
 
 export default function History() {
   const [transactions, setTransactions] = useState([]);
   const [inventoryMap, setInventoryMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterType, setFilterType] = useState('All');
 
   const loadData = async () => {
     setLoading(true);
@@ -57,26 +60,74 @@ export default function History() {
 
   const filteredTx = transactions.filter(tx => {
     const name = inventoryMap[tx.ItemID] || tx.ItemID;
-    return name.toLowerCase().includes(search.toLowerCase()) || 
+    const matchSearch = name.toLowerCase().includes(search.toLowerCase()) || 
            tx.TxID.toLowerCase().includes(search.toLowerCase()) ||
            (tx.FulfillerName || '').toLowerCase().includes(search.toLowerCase()) ||
            (tx.RestockerName || '').toLowerCase().includes(search.toLowerCase());
+           
+    let matchMonth = true;
+    if (filterMonth) {
+       const txMonth = tx.Date.substring(0, 7); // YYYY-MM
+       matchMonth = txMonth === filterMonth;
+    }
+    
+    let matchType = true;
+    if (filterType !== 'All') {
+       if (filterType === 'Adjust') {
+         matchType = tx.Type !== 'In' && tx.Type !== 'Out';
+       } else {
+         matchType = tx.Type === filterType;
+       }
+    }
+    
+    return matchSearch && matchMonth && matchType;
   });
+
+  const formatMonthThai = (yyyyMM) => {
+    if (!yyyyMM) return '';
+    const [year, month] = yyyMM.split('-');
+    const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    return `${thaiMonths[parseInt(month) - 1]} ${parseInt(year) + 543}`;
+  };
 
   return (
     <div className="history-page animate-fade-in" style={{ paddingBottom: '2rem' }}>
-      <div className="page-header">
-        <h1 className="page-title"><HistoryIcon className="inline-icon" /> ประวัติทำรายการทั้งหมด</h1>
+      <div className="print-only-header">
+        <h2>รายงานประวัติการทำรายการ</h2>
+        {filterMonth && <p>ประจำเดือน {formatMonthThai(filterMonth)}</p>}
+        {filterType !== 'All' && <p>ประเภทรายการ: {filterType === 'In' ? 'รับเข้าพัสดุ' : filterType === 'Out' ? 'เบิกจ่าย' : 'ปรับลดยอด'}</p>}
       </div>
 
-      <div className="search-bar" style={{ marginBottom: '1.5rem' }}>
-        <Search size={20} className="text-muted" />
-        <input 
-          type="text" 
-          placeholder="ค้นหาชื่อพัสดุ รหัส หรือชื่อผู้ดำเนินการ..." 
-          value={search} 
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="page-header no-print">
+        <h1 className="page-title"><HistoryIcon className="inline-icon" /> ประวัติทำรายการทั้งหมด</h1>
+        <button className="btn btn-primary" onClick={() => window.print()}>
+          <Printer size={18} /> พิมพ์รายงาน
+        </button>
+      </div>
+
+      <div className="history-filters no-print">
+        <div className="search-bar" style={{ marginBottom: 0, flex: 1 }}>
+          <Search size={20} className="text-muted" />
+          <input 
+            type="text" 
+            placeholder="ค้นหาชื่อพัสดุ รหัส หรือชื่อผู้ดำเนินการ..." 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="filter-group">
+          <Calendar size={18} className="text-muted" />
+          <input type="month" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} />
+        </div>
+        <div className="filter-group">
+          <Filter size={18} className="text-muted" />
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <option value="All">ทุกประเภท</option>
+            <option value="In">เฉพาะรับเข้าพัสดุ</option>
+            <option value="Out">เฉพาะเบิกจ่าย</option>
+            <option value="Adjust">เฉพาะปรับลดยอด</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (

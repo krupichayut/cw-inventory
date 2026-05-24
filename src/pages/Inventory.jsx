@@ -159,58 +159,60 @@ export default function Inventory() {
           ))}
         </div>
       ) : (
-        <table className="inventory-table">
-          <thead>
-            <tr>
-              <th>ลำดับ</th>
-              <th>รหัส</th>
-              <th>ภาพ</th>
-              <th>ชื่อพัสดุ</th>
-              <th>หมวดหมู่</th>
-              <th className="text-right">คงเหลือ</th>
-              <th className="text-right">ขั้นต่ำ</th>
-              <th>หน่วย</th>
-              <th className="text-center">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems.map(item => {
-              const isLow = parseInt(item.Balance) <= parseInt(item.MinStock);
-              return (
-                <tr key={item.ID} className={isLow ? 'low-stock' : ''}>
-                  <td>{item.Order || '-'}</td>
-                  <td className="item-id">{item.ID}</td>
-                  <td>
-                    {item.ImageURL ? (
-                      <img 
-                        src={getDirectImageUrl(item.ImageURL)} 
-                        alt={item.Name} 
-                        className="table-img" 
-                        style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-                        onClick={() => setPreviewImage(getDirectImageUrl(item.ImageURL))}
-                      />
-                    ) : (
-                      <div className="no-img-small"><ImageIcon size={16} /></div>
-                    )}
-                  </td>
-                  <td>{item.Name}</td>
-                  <td>{item.Category}</td>
-                  <td className="text-right">
-                    {isLow && <AlertTriangle size={14} className="text-danger" style={{ marginRight: '6px', verticalAlign: '-2px' }} title="พัสดุใกล้หมด" />}
-                    {item.Balance}
-                  </td>
-                  <td className="text-right">{item.MinStock}</td>
-                  <td>{item.BaseUnit || 'ชิ้น'}</td>
-                  <td className="text-center" style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
-                    <button className="btn btn-ghost" onClick={() => setAdjustModal({ show: true, item: item, qty: adjustModal.type === 'In' ? 1 : (item.Balance || 0), type: 'In' })}><PackagePlus size={16} /></button>
-                    <button className="btn btn-ghost" onClick={() => setEditModal({ show: true, item: item, name: item.Name, minStock: item.MinStock, category: item.Category, order: item.Order || 999, baseUnit: item.BaseUnit || 'ชิ้น', packUnit: item.PackUnit || '', packSize: item.PackSize || 1 })}><Edit size={16} /></button>
-                    <button className="btn btn-ghost text-danger" onClick={() => handleDeleteItem(item.ID)}><Trash2 size={16} /></button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
+          {filteredItems.map(item => {
+            const isLow = parseInt(item.Balance) <= parseInt(item.MinStock);
+            return (
+              <div key={item.ID} className={`item-card glass-panel ${isLow ? 'low-stock-card' : ''}`} style={{ position: 'relative', overflow: 'hidden' }}>
+                <div className="item-img-container" onClick={() => setPreviewImage(getDirectImageUrl(item.ImageURL))} style={{ height: '180px' }}>
+                  {item.ImageURL ? (
+                    <img src={getDirectImageUrl(item.ImageURL)} alt={item.Name} className="item-img" style={{ cursor: 'pointer' }} />
+                  ) : (
+                    <div className="no-img"><ImageIcon size={32} /></div>
+                  )}
+                  {isLow && (
+                    <div className="low-stock-badge">
+                      <AlertTriangle size={14} /> ใกล้หมด
+                    </div>
+                  )}
+                </div>
+                
+                <div className="item-info">
+                  <div className="item-id">{item.ID}</div>
+                  <h3 className="item-name" style={{ fontSize: '1.1rem', marginBottom: '0.5rem', lineHeight: '1.4' }}>{item.Name}</h3>
+                  <div className="item-category" style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', marginBottom: '1rem', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '4px', display: 'inline-block' }}>{item.Category}</div>
+                  
+                  <div className="item-stats" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--border-light)', paddingTop: '1rem', marginTop: 'auto' }}>
+                    <div className="stat-box">
+                      <div className="stat-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>คงเหลือ</div>
+                      <div className={`stat-val ${isLow ? 'text-danger' : 'text-main'}`} style={{ fontSize: '1.4rem', fontWeight: '700' }}>
+                        {item.Balance} <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: 'var(--text-muted)' }}>{item.BaseUnit || 'ชิ้น'}</span>
+                      </div>
+                    </div>
+                    <div className="stat-box" style={{ textAlign: 'right' }}>
+                      <div className="stat-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ขั้นต่ำ</div>
+                      <div className="stat-val text-muted" style={{ fontSize: '1.4rem', fontWeight: '700' }}>
+                        {item.MinStock} <span style={{ fontSize: '0.85rem', fontWeight: 'normal' }}>{item.BaseUnit || 'ชิ้น'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', display: 'flex', gap: '0.25rem', background: 'rgba(255,255,255,0.95)', padding: '0.25rem', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', backdropFilter: 'blur(4px)' }}>
+                  <button className="btn-ghost" style={{ padding: '0.4rem', borderRadius: '4px' }} title="ปรับยอด/รับเข้า" onClick={() => setAdjustModal({ show: true, item: item, qty: adjustModal.type === 'In' ? 1 : (item.Balance || 0), type: 'In' })}>
+                    <PackagePlus size={16} className="text-primary" />
+                  </button>
+                  <button className="btn-ghost" style={{ padding: '0.4rem', borderRadius: '4px' }} title="แก้ไข" onClick={() => setEditModal({ show: true, item: item, name: item.Name, minStock: item.MinStock, category: item.Category, order: item.Order || 999, baseUnit: item.BaseUnit || 'ชิ้น', packUnit: item.PackUnit || '', packSize: item.PackSize || 1 })}>
+                    <Edit size={16} />
+                  </button>
+                  <button className="btn-ghost text-danger" style={{ padding: '0.4rem', borderRadius: '4px' }} title="ลบ" onClick={() => handleDeleteItem(item.ID)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {showModal && (

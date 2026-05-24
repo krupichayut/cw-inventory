@@ -122,9 +122,9 @@ export default function Requisition() {
             <input type="text" required value={requester} onChange={e => setRequester(e.target.value)} placeholder="ระบุชื่อของคุณ" style={{ padding: '0.75rem', width: '100%' }} />
           </div>
           <div className="form-group" style={{ marginBottom: '2.5rem' }}>
-            <label>ฝ่ายงาน</label>
+            <label>สำหรับใช้ในกลุ่มสาระฯ/กลุ่มงาน</label>
             <select required value={department} onChange={e => setDepartment(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-              <option value="" disabled>-- เลือกฝ่ายงาน --</option>
+              <option value="" disabled>-- เลือกกลุ่มสาระฯ/กลุ่มงาน --</option>
               {departments.map(d => (
                 <option key={d.ID} value={d.Name}>{d.Name}</option>
               ))}
@@ -220,7 +220,7 @@ export default function Requisition() {
           
           <div className="review-user-info" style={{ background: 'var(--bg-light)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', gap: '2rem' }}>
             <div><span className="text-muted">ชื่อผู้เบิก:</span> <strong>{requester}</strong></div>
-            <div><span className="text-muted">ฝ่ายงาน:</span> <strong>{department}</strong></div>
+            <div><span className="text-muted">กลุ่มสาระฯ/กลุ่มงาน:</span> <strong>{department}</strong></div>
             <div><span className="text-muted">วันที่:</span> <strong>{new Date().toLocaleDateString('th-TH')}</strong></div>
           </div>
 

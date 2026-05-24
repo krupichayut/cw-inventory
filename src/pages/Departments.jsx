@@ -119,6 +119,39 @@ export default function Departments() {
             <Plus size={20} /> เพิ่มฝ่ายงาน
           </button>
         </form>
+        
+        {/* Temporary Import Button */}
+        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <button 
+            type="button" 
+            className="btn btn-ghost text-primary" 
+            onClick={async () => {
+              if(!window.confirm('ยืนยันการล้างข้อมูลฝ่ายงานเก่าทั้งหมด แล้วนำเข้า 18 ฝ่ายงานใหม่?')) return;
+              setProcessing(true);
+              const defaultDepts = [
+                {n: 'วิชาการ', o: 1}, {n: 'บุคลากร', o: 2}, {n: 'ทั่วไป', o: 3}, {n: 'กิจการนักเรียน', o: 4},
+                {n: 'งบประมาณ', o: 5}, {n: 'คณิตศาสตร์', o: 6}, {n: 'วิทยาศาสตร์และเทคโน', o: 7}, {n: 'ภาษาไทย', o: 8},
+                {n: 'ภาษาต่างประเทศ', o: 9}, {n: 'สังคมศึกษาฯ', o: 10}, {n: 'ศิลปะ', o: 11}, {n: 'การงานอาชีพ', o: 12},
+                {n: 'สุขศึกษาฯ', o: 13}, {n: 'กลุ่มอำนวยการ', o: 14}, {n: 'งานพัสดุ', o: 15}, {n: 'งานแผนงาน', o: 16},
+                {n: 'งานนักการ/แม่บ้าน', o: 17}, {n: 'อาคารสถานที่', o: 18}
+              ];
+              try {
+                // Delete existing ones
+                for (let d of departments) await api.deleteDepartment(d.ID);
+                // Add new ones
+                for (let d of defaultDepts) await api.addDepartment(d.n, d.o);
+                toast.success('นำเข้าข้อมูลสำเร็จ!');
+                loadData();
+              } catch(e) {
+                toast.error('Error: ' + e);
+              }
+              setProcessing(false);
+            }} 
+            disabled={processing}
+          >
+            <Plus size={16} /> นำเข้าข้อมูลมาตรฐาน 18 ฝ่าย (ลบของเก่าทิ้ง)
+          </button>
+        </div>
       </div>
 
       {loading ? <p className="text-center">กำลังโหลดข้อมูล...</p> : (

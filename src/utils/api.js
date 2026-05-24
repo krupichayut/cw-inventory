@@ -1,9 +1,10 @@
-// ใส่ Web App URL ที่ได้จากการ Deploy Google Apps Script
-export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzXM2X88G_b6PGlcB9fjJ9frOhcUkA-WYvbmmKH1sWs9eqGb1eIKGZmy11ChbbpNy0/exec'; 
+import { db } from './firebase';
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
+
+export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzXM2X88G_b6PGlcB9fjJ9frOhcUkA-WYvbmmKH1sWs9eqGb1eIKGZmy11ChbbpNy0/exec';
 
 export const getDirectImageUrl = (url) => {
   if (!url) return '';
-  // ใช้ Thumbnail API ของ Google Drive ซึ่งเสถียรกว่าและไม่ค่อยติดปัญหาบล็อกรูปภาพ
   const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
   if (match && match[1]) {
     return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
@@ -11,36 +12,55 @@ export const getDirectImageUrl = (url) => {
   return url;
 };
 
-// Mock Data for development and demonstration
-let mockInventory = [
-  { ID: 'ITM-1', Name: 'กระดาษ A4', ImageURL: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=300&q=80', Balance: 50, MinStock: 20, Category: 'เครื่องใช้สำนักงาน' },
-  { ID: 'ITM-2', Name: 'ปากกาน้ำเงิน', ImageURL: 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=300&q=80', Balance: 15, MinStock: 30, Category: 'เครื่องเขียน' },
-  { ID: 'ITM-3', Name: 'แฟ้มเอกสาร', ImageURL: 'https://images.unsplash.com/photo-1620247604558-45300b8c6a2c?w=300&q=80', Balance: 5, MinStock: 10, Category: 'เครื่องใช้สำนักงาน' }
-];
-
-let mockRequests = [
-  { RequestID: 'REQ-101', Date: new Date().toISOString(), Requester: 'คุณสมชาย', Department: 'วิชาการ', ItemID: 'ITM-1', Quantity: 5, Status: 'Pending' }
-];
-
-let mockDepartments = [
-  { ID: 'DEP-1', Name: 'บริหาร' },
-  { ID: 'DEP-2', Name: 'วิชาการ' }
-];
-
-const useMock = !GAS_URL;
+// Helper: Backup to GAS silently
+const backupToGAS = (payload) => {
+  fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }).catch(e => console.error("GAS Backup failed:", e));
+};
 
 export const api = {
   async getData() {
-    if (useMock) {
-      return new Promise(resolve => setTimeout(() => resolve({ inventory: [...mockInventory], requests: [...mockRequests], departments: [...mockDepartments] }), 500));
+    try {
+      // 1. เร็วดั่งสายฟ้า: ดึงข้อมูลจาก Firebase ก่อนเลย
+      const invSnap = await getDocs(collection(db, 'inventory'));
+      let inventory = [];
+      invSnap.forEach(d => inventory.push(d.data()));
+
+      // ถ้า Firebase ว่างเปล่า (ใช้งานครั้งแรก) ให้ไปดูดข้อมูลจาก Google Sheets มาใส่ Firebase
+      if (inventory.length === 0) {
+        console.log("Firebase is empty. Syncing from Google Sheets...");
+        const res = await fetch(`${GAS_URL}?action=getData`);
+        const gasData = await res.json();
+        
+        // Save to Firebase
+        for(let item of gasData.inventory || []) await setDoc(doc(db, 'inventory', item.ID), item);
+        for(let req of gasData.requests || []) await setDoc(doc(db, 'requests', req.RequestID), req);
+        for(let dep of gasData.departments || []) await setDoc(doc(db, 'departments', dep.ID), dep);
+        for(let tx of gasData.transactions || []) await setDoc(doc(db, 'transactions', tx.TxID), tx);
+        
+        return gasData;
+      }
+
+      // ถ้ามีข้อมูลแล้ว ดึงส่วนที่เหลือให้ครบ
+      const reqSnap = await getDocs(collection(db, 'requests'));
+      const depSnap = await getDocs(collection(db, 'departments'));
+      const txSnap = await getDocs(collection(db, 'transactions'));
+      
+      let requests = []; reqSnap.forEach(d => requests.push(d.data()));
+      let departments = []; depSnap.forEach(d => departments.push(d.data()));
+      let transactions = []; txSnap.forEach(d => transactions.push(d.data()));
+
+      return { inventory, requests, departments, transactions };
+    } catch (e) {
+      console.error("Firebase Error, falling back to GAS:", e);
+      const res = await fetch(`${GAS_URL}?action=getData`);
+      return await res.json();
     }
-    const res = await fetch(`${GAS_URL}?action=getData`);
-    return await res.json();
   },
 
   async uploadImage(file) {
-    if (useMock) return new Promise(resolve => setTimeout(() => resolve('https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=300&q=80'), 1000));
-    
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = async () => {
@@ -62,95 +82,111 @@ export const api = {
   },
 
   async addItem(item) {
-    if (useMock) {
-      const newId = 'ITM-' + Date.now();
-      mockInventory.push({ ID: newId, Balance: 0, ...item });
-      return new Promise(resolve => setTimeout(() => resolve({ status: 'success', id: newId }), 500));
-    }
+    // 1. ส่งไปขอ ID จากหน้า Google Sheets ก่อน เพื่อให้รหัสตรงกัน (เช่น ITM-005)
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addItem', ...item }) });
-    return await res.json();
-  },
-
-  async createRequest(requester, department, items) {
-    if (useMock) {
-      const reqId = 'REQ-' + Date.now();
-      items.forEach(it => {
-        mockRequests.push({ RequestID: reqId, Date: new Date().toISOString(), Requester: requester, Department: department, ItemID: it.id, Quantity: it.quantity, Status: 'Pending' });
-      });
-      return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
+    const data = await res.json();
+    
+    if (data.status === 'success' && data.id) {
+      // 2. ได้ ID มาแล้ว ค่อยเซฟลง Firebase
+      const itemData = { ID: data.id, Balance: 0, ...item, Name: item.name, ImageURL: item.image, MinStock: item.minStock, Category: item.category };
+      await setDoc(doc(db, 'inventory', data.id), itemData);
     }
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'createRequest', requester, department, items }) });
-    return await res.json();
-  },
-
-  async fulfillRequest(requestId) {
-    if (useMock) {
-      mockRequests = mockRequests.map(r => r.RequestID === requestId ? { ...r, Status: 'Fulfilled' } : r);
-      // Deduct mock inventory
-      const fulfilledReqs = mockRequests.filter(r => r.RequestID === requestId);
-      fulfilledReqs.forEach(req => {
-        const inv = mockInventory.find(i => i.ID === req.ItemID);
-        if (inv) inv.Balance -= req.Quantity;
-      });
-      return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
-    }
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'fulfillRequest', requestId }) });
-    return await res.json();
-  },
-
-  async adjustStock(itemId, quantity) {
-    if (useMock) {
-      const inv = mockInventory.find(i => i.ID === itemId);
-      if (inv) inv.Balance += parseInt(quantity);
-      return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
-    }
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adjustStock', itemId, quantity }) });
-    return await res.json();
+    return data;
   },
 
   async updateItem(item) {
-    if (useMock) return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'updateItem', ...item }) });
-    return await res.json();
+    // 1. เซฟลง Firebase (เร็ว)
+    await updateDoc(doc(db, 'inventory', item.id), {
+      Name: item.name, ImageURL: item.image, MinStock: item.minStock, Category: item.category
+    });
+    // 2. ยิงแบ็กอัปไป GAS (เงียบๆ)
+    backupToGAS({ action: 'updateItem', ...item });
+    return { status: 'success' };
   },
 
   async deleteItem(id) {
-    if (useMock) return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteItem', id }) });
-    return await res.json();
+    await deleteDoc(doc(db, 'inventory', id));
+    backupToGAS({ action: 'deleteItem', id });
+    return { status: 'success' };
+  },
+
+  async createRequest(requester, department, items) {
+    // ส่งไป GAS ก่อน เพื่อรับรหัส REQ ที่ถูกต้อง
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'createRequest', requester, department, items }) });
+    const data = await res.json();
+    
+    // ดึงข้อมูลมาอัปเดต Firebase ให้ตรงกัน
+    const gasRes = await fetch(`${GAS_URL}?action=getData`);
+    const gasData = await gasRes.json();
+    for(let req of gasData.requests || []) {
+      if(req.Requester === requester && req.Status === 'Pending') {
+        await setDoc(doc(db, 'requests', req.RequestID), req);
+      }
+    }
+    return data;
+  },
+
+  async fulfillRequest(requestId) {
+    // 1. อัปเดตฝั่ง Firebase ทันที (เพื่อให้ UI เร็ว)
+    const reqRef = doc(db, 'requests', requestId);
+    const reqSnap = await getDoc(reqRef);
+    if (reqSnap.exists()) {
+       const reqData = reqSnap.data();
+       await updateDoc(reqRef, { Status: 'Fulfilled' });
+       
+       const invRef = doc(db, 'inventory', reqData.ItemID);
+       const invSnap = await getDoc(invRef);
+       if (invSnap.exists()) {
+          const currentBalance = parseInt(invSnap.data().Balance) || 0;
+          await updateDoc(invRef, { Balance: currentBalance - parseInt(reqData.Quantity) });
+       }
+       
+       const txData = { TxID: 'TX-' + Date.now(), Date: new Date().toISOString(), Type: 'Out', ItemID: reqData.ItemID, Quantity: reqData.Quantity, RefReqID: requestId };
+       await setDoc(doc(db, 'transactions', txData.TxID), txData);
+    }
+    // 2. แบ็กอัปไป GAS
+    backupToGAS({ action: 'fulfillRequest', requestId });
+    return { status: 'success' };
   },
 
   async deleteRequest(requestId) {
-    if (useMock) return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteRequest', requestId }) });
-    return await res.json();
+    await deleteDoc(doc(db, 'requests', requestId));
+    backupToGAS({ action: 'deleteRequest', requestId });
+    return { status: 'success' };
+  },
+
+  async adjustStock(itemId, quantity) {
+    const invRef = doc(db, 'inventory', itemId);
+    const invSnap = await getDoc(invRef);
+    if (invSnap.exists()) {
+       const currentBalance = parseInt(invSnap.data().Balance) || 0;
+       await updateDoc(invRef, { Balance: currentBalance + parseInt(quantity) });
+       
+       const txData = { TxID: 'TX-' + Date.now(), Date: new Date().toISOString(), Type: parseInt(quantity) > 0 ? 'In' : 'Adjust', ItemID: itemId, Quantity: Math.abs(parseInt(quantity)) };
+       await setDoc(doc(db, 'transactions', txData.TxID), txData);
+    }
+    backupToGAS({ action: 'adjustStock', itemId, quantity });
+    return { status: 'success' };
   },
 
   async addDepartment(name) {
-    if (useMock) {
-      const newId = 'DEP-' + Date.now();
-      mockDepartments.push({ ID: newId, Name: name });
-      return new Promise(resolve => setTimeout(() => resolve({ status: 'success', id: newId }), 500));
-    }
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addDepartment', name }) });
-    return await res.json();
+    const data = await res.json();
+    if (data.status === 'success' && data.id) {
+      await setDoc(doc(db, 'departments', data.id), { ID: data.id, Name: name });
+    }
+    return data;
   },
 
   async updateDepartment(id, name) {
-    if (useMock) {
-      mockDepartments = mockDepartments.map(d => d.ID === id ? { ...d, Name: name } : d);
-      return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
-    }
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'updateDepartment', id, name }) });
-    return await res.json();
+    await updateDoc(doc(db, 'departments', id), { Name: name });
+    backupToGAS({ action: 'updateDepartment', id, name });
+    return { status: 'success' };
   },
 
   async deleteDepartment(id) {
-    if (useMock) {
-      mockDepartments = mockDepartments.filter(d => d.ID !== id);
-      return new Promise(resolve => setTimeout(() => resolve({ status: 'success' }), 500));
-    }
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteDepartment', id }) });
-    return await res.json();
+    await deleteDoc(doc(db, 'departments', id));
+    backupToGAS({ action: 'deleteDepartment', id });
+    return { status: 'success' };
   }
 };

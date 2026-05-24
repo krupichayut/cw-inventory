@@ -128,10 +128,10 @@ export const api = {
       const itemData = { 
         ID: data.id, 
         Balance: 0, 
-        Name: item.name, 
-        ImageURL: item.image, 
-        MinStock: item.minStock, 
-        Category: item.category,
+        Name: item.name || '', 
+        ImageURL: item.imageUrl || '', 
+        MinStock: item.minStock || 0, 
+        Category: item.category || '',
         Order: item.order || 999,
         BaseUnit: item.baseUnit || 'ชิ้น',
         PackUnit: item.packUnit || '',
@@ -145,16 +145,20 @@ export const api = {
 
   async updateItem(item) {
     // 1. เซฟลง Firebase (เร็ว)
-    await updateDoc(doc(db, 'inventory', item.id), {
-      Name: item.name, 
-      ImageURL: item.image, 
-      MinStock: item.minStock, 
-      Category: item.category,
+    const updateData = {
+      Name: item.name || '', 
+      MinStock: item.minStock || 0, 
+      Category: item.category || '',
       Order: item.order || 999,
       BaseUnit: item.baseUnit || 'ชิ้น',
       PackUnit: item.packUnit || '',
       PackSize: item.packSize || 1
-    });
+    };
+    if (item.imageUrl !== undefined) {
+      updateData.ImageURL = item.imageUrl;
+    }
+    await updateDoc(doc(db, 'inventory', item.id), updateData);
+    
     // 2. ยิงแบ็กอัปไป GAS (เงียบๆ)
     backupToGAS({ action: 'updateItem', ...item });
     api.clearCache();

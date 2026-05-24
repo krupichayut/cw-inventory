@@ -211,7 +211,8 @@ export const api = {
          ItemID: reqData.ItemID, 
          Quantity: reqData.Quantity, 
          RefReqID: requestId,
-         FulfillerName: fulfillerName || 'Admin'
+         FulfillerName: fulfillerName || 'Admin',
+         RequesterName: reqData.Requester || ''
        };
        await setDoc(doc(db, 'transactions', txData.TxID), txData);
     }

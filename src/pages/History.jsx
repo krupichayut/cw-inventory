@@ -164,9 +164,10 @@ export default function History() {
                     {tx.Type === 'Out' ? '-' : '+'}{tx.Quantity}
                   </td>
                   <td>
-                    {tx.RestockerName && <div>ผู้รับ: {tx.RestockerName}</div>}
-                    {tx.FulfillerName && <div>ผู้จ่าย: {tx.FulfillerName}</div>}
-                    {!tx.RestockerName && !tx.FulfillerName && '-'}
+                    {tx.RestockerName && <div style={{ fontSize: '0.85rem' }}>ผู้รับเข้า: {tx.RestockerName}</div>}
+                    {tx.RequesterName && <div style={{ fontSize: '0.85rem' }}>ผู้เบิก: {tx.RequesterName}</div>}
+                    {tx.FulfillerName && <div style={{ fontSize: '0.85rem' }}>ผู้จ่าย: {tx.FulfillerName}</div>}
+                    {!tx.RestockerName && !tx.FulfillerName && !tx.RequesterName && '-'}
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     {tx.ReceiptURL ? (

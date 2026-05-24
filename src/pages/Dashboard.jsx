@@ -238,6 +238,7 @@ export default function Dashboard() {
                         <Clock size={12} className="inline-icon" /> 
                         {formatDateTimeThai(tx.Date)} 
                         {tx.FulfillerName && ` • จ่ายโดย: ${tx.FulfillerName}`}
+                        {tx.RequesterName && ` • เบิกโดย: ${tx.RequesterName}`}
                         {tx.RestockerName && ` • รับเข้าโดย: ${tx.RestockerName}`}
                       </div>
                     </div>

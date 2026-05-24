@@ -121,52 +121,52 @@ export default function Dashboard() {
       </div>
 
       {/* --- STAT CARDS --- */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         
-        <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--primary)' }}>
+        <div className="stat-card stat-primary">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>พัสดุทั้งหมด</p>
-              <h2 style={{ fontSize: '2rem', margin: 0 }}>{stats.totalItems}</h2>
+              <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '500' }}>พัสดุทั้งหมด</p>
+              <h2 style={{ fontSize: '2.5rem', margin: 0, fontFamily: 'Outfit', fontWeight: '800', lineHeight: 1 }}>{stats.totalItems}</h2>
             </div>
-            <div style={{ padding: '0.75rem', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '50%' }}>
-              <Package size={24} />
+            <div className="stat-icon-wrapper" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+              <Package size={28} />
             </div>
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--danger)' }}>
+        <div className="stat-card stat-danger">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>พัสดุใกล้หมด</p>
-              <h2 style={{ fontSize: '2rem', margin: 0 }}>{stats.lowStock}</h2>
+              <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '500' }}>พัสดุใกล้หมด</p>
+              <h2 style={{ fontSize: '2.5rem', margin: 0, fontFamily: 'Outfit', fontWeight: '800', lineHeight: 1 }}>{stats.lowStock}</h2>
             </div>
-            <div style={{ padding: '0.75rem', background: 'var(--danger-light)', color: 'var(--danger)', borderRadius: '50%' }}>
-              <AlertTriangle size={24} />
+            <div className="stat-icon-wrapper" style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}>
+              <AlertTriangle size={28} />
             </div>
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--warning)' }}>
+        <div className="stat-card stat-warning">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>รออนุมัติ</p>
-              <h2 style={{ fontSize: '2rem', margin: 0 }}>{stats.pendingReqs}</h2>
+              <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '500' }}>รออนุมัติ</p>
+              <h2 style={{ fontSize: '2.5rem', margin: 0, fontFamily: 'Outfit', fontWeight: '800', lineHeight: 1 }}>{stats.pendingReqs}</h2>
             </div>
-            <div style={{ padding: '0.75rem', background: 'var(--warning-light)', color: 'var(--warning)', borderRadius: '50%' }}>
-              <Clock size={24} />
+            <div className="stat-icon-wrapper" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>
+              <Clock size={28} />
             </div>
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--secondary)' }}>
+        <div className="stat-card stat-secondary">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>จ่ายออกเดือนนี้ (ชิ้น)</p>
-              <h2 style={{ fontSize: '2rem', margin: 0 }}>{stats.monthlyOut}</h2>
+              <p className="text-muted" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '500' }}>จ่ายออกเดือนนี้ (ชิ้น)</p>
+              <h2 style={{ fontSize: '2.5rem', margin: 0, fontFamily: 'Outfit', fontWeight: '800', lineHeight: 1 }}>{stats.monthlyOut}</h2>
             </div>
-            <div style={{ padding: '0.75rem', background: 'var(--secondary-light)', color: 'var(--secondary)', borderRadius: '50%' }}>
-              <TrendingUp size={24} />
+            <div className="stat-icon-wrapper" style={{ background: 'var(--secondary-light)', color: 'var(--secondary)' }}>
+              <TrendingUp size={28} />
             </div>
           </div>
         </div>
@@ -187,17 +187,19 @@ export default function Dashboard() {
             <div style={{ width: '100%', height: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topItems} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="colorBar" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="var(--primary-light)" stopOpacity={0.8}/>
+                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={1}/>
+                    </linearGradient>
+                  </defs>
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={100} style={{ fontSize: '0.85rem' }} />
                   <Tooltip 
-                    cursor={{fill: 'rgba(0,0,0,0.02)'}}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }}
+                    cursor={{fill: 'rgba(0,0,0,0.03)'}}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: 'var(--shadow-lg)' }}
                   />
-                  <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20}>
-                    {topItems.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={`var(--primary)`} />
-                    ))}
-                  </Bar>
+                  <Bar dataKey="count" fill="url(#colorBar)" radius={[0, 8, 8, 0]} barSize={24} animationDuration={1500} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -213,31 +215,36 @@ export default function Dashboard() {
           {recentTx.length === 0 ? (
             <p className="text-center text-muted" style={{ padding: '2rem 0' }}>ยังไม่มีประวัติทำรายการ</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="timeline-container">
               {recentTx.map(tx => (
-                <div key={tx.TxID} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-base)', borderRadius: '8px' }}>
-                  <div>
-                    <div style={{ fontWeight: '500' }}>{inventoryMap[tx.ItemID] || tx.ItemID}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {new Date(tx.Date).toLocaleString('th-TH')} 
-                      {tx.FulfillerName && ` • โดย: ${tx.FulfillerName}`}
-                      {tx.RestockerName && ` • ผู้รับเข้า: ${tx.RestockerName}`}
+                <div key={tx.TxID} className="timeline-item">
+                  <div className={`timeline-dot dot-${tx.Type.toLowerCase()}`}></div>
+                  <div className="timeline-content">
+                    <div>
+                      <div style={{ fontWeight: '600', fontSize: '1.05rem' }}>{inventoryMap[tx.ItemID] || tx.ItemID}</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                        <Clock size={12} className="inline-icon" /> 
+                        {new Date(tx.Date).toLocaleString('th-TH')} 
+                        {tx.FulfillerName && ` • จ่ายโดย: ${tx.FulfillerName}`}
+                        {tx.RestockerName && ` • รับเข้าโดย: ${tx.RestockerName}`}
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: '4px', 
-                      fontSize: '0.8rem', 
-                      fontWeight: 'bold',
-                      color: getTxColor(tx.Type),
-                      background: `rgba(0,0,0,0.05)`
-                    }}>
-                      {getTxText(tx.Type)}
-                    </span>
-                    <strong style={{ fontSize: '1.1rem', color: getTxColor(tx.Type) }}>
-                      {tx.Type === 'Out' ? '-' : '+'}{tx.Quantity}
-                    </strong>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                      <span style={{ 
+                        padding: '4px 10px', 
+                        borderRadius: 'var(--radius-full)', 
+                        fontSize: '0.75rem', 
+                        fontWeight: '700',
+                        color: getTxColor(tx.Type),
+                        background: `rgba(0,0,0,0.04)`,
+                        letterSpacing: '0.5px'
+                      }}>
+                        {getTxText(tx.Type)}
+                      </span>
+                      <strong style={{ fontSize: '1.25rem', color: getTxColor(tx.Type), fontFamily: 'Outfit' }}>
+                        {tx.Type === 'Out' ? '-' : '+'}{tx.Quantity}
+                      </strong>
+                    </div>
                   </div>
                 </div>
               ))}

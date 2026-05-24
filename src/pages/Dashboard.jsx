@@ -196,8 +196,8 @@ export default function Dashboard() {
           {topItems.length === 0 ? (
             <p className="text-center text-muted" style={{ padding: '2rem 0' }}>ยังไม่มีการเบิกพัสดุในเดือนนี้</p>
           ) : (
-            <div style={{ width: '100%', height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ width: '100%', minHeight: '300px' }}>
+              <ResponsiveContainer width="99%" height={300}>
                 <BarChart data={topItems} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                   <defs>
                     <linearGradient id="colorBar" x1="0" y1="0" x2="1" y2="0">

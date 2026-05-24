@@ -5,7 +5,7 @@ export default function Navbar({ onLogout, onChangePassword }) {
   return (
     <nav className="navbar">
       <div className="nav-brand">
-        <img src="/app-icon.png" alt="โรงเรียนไชยาวิทยา" className="sidebar-logo" />
+        <img src="/app-icon.jpg" alt="โรงเรียนไชยาวิทยา" className="sidebar-logo" />
         <span className="brand-text">ระบบพัสดุ (Admin)</span>
       </div>
       <div className="nav-links">

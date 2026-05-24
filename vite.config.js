@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.svg', 'logo.jpg', 'app-icon.jpg'],
       manifest: {
         name: 'ระบบเบิกพัสดุ',
         short_name: 'Inventory',
@@ -16,14 +16,20 @@ export default defineConfig({
         background_color: '#f4f7fb',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'app-icon.jpg',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/jpeg'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'app-icon.jpg',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/jpeg'
+          },
+          {
+            src: 'app-icon.jpg',
+            sizes: '512x512',
+            type: 'image/jpeg',
+            purpose: 'any maskable'
           }
         ]
       }

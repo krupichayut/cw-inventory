@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, CheckCircle, ClipboardList, FileText, LogOut, Lock, Users } from 'lucide-react';
+import { LayoutDashboard, Package, CheckCircle, ClipboardList, FileText, LogOut, Lock, Users, PackagePlus, History } from 'lucide-react';
 
 export default function Navbar({ onLogout, onChangePassword }) {
   return (
@@ -15,8 +15,14 @@ export default function Navbar({ onLogout, onChangePassword }) {
         <NavLink to="/admin/inventory" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <Package size={20} /> คลังพัสดุ
         </NavLink>
+        <NavLink to="/admin/restock" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <PackagePlus size={20} /> รับเข้าล็อตใหม่
+        </NavLink>
         <NavLink to="/admin/fulfillment" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <CheckCircle size={20} /> จ่ายของ
+        </NavLink>
+        <NavLink to="/admin/history" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <History size={20} /> ประวัติทั้งหมด
         </NavLink>
         <NavLink to="/admin/stocktake" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <ClipboardList size={20} /> ตรวจนับประจำปี

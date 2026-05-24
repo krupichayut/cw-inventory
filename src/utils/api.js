@@ -88,7 +88,18 @@ export const api = {
     
     if (data.status === 'success' && data.id) {
       // 2. ได้ ID มาแล้ว ค่อยเซฟลง Firebase
-      const itemData = { ID: data.id, Balance: 0, ...item, Name: item.name, ImageURL: item.image, MinStock: item.minStock, Category: item.category };
+      const itemData = { 
+        ID: data.id, 
+        Balance: 0, 
+        Name: item.name, 
+        ImageURL: item.image, 
+        MinStock: item.minStock, 
+        Category: item.category,
+        Order: item.order || 999,
+        BaseUnit: item.baseUnit || 'ชิ้น',
+        PackUnit: item.packUnit || '',
+        PackSize: item.packSize || 1
+      };
       await setDoc(doc(db, 'inventory', data.id), itemData);
     }
     return data;
@@ -97,7 +108,14 @@ export const api = {
   async updateItem(item) {
     // 1. เซฟลง Firebase (เร็ว)
     await updateDoc(doc(db, 'inventory', item.id), {
-      Name: item.name, ImageURL: item.image, MinStock: item.minStock, Category: item.category
+      Name: item.name, 
+      ImageURL: item.image, 
+      MinStock: item.minStock, 
+      Category: item.category,
+      Order: item.order || 999,
+      BaseUnit: item.baseUnit || 'ชิ้น',
+      PackUnit: item.packUnit || '',
+      PackSize: item.packSize || 1
     });
     // 2. ยิงแบ็กอัปไป GAS (เงียบๆ)
     backupToGAS({ action: 'updateItem', ...item });
@@ -126,7 +144,7 @@ export const api = {
     return data;
   },
 
-  async fulfillRequest(requestId) {
+  async fulfillRequest(requestId, fulfillerName) {
     // 1. อัปเดตฝั่ง Firebase ทันที (เพื่อให้ UI เร็ว)
     const reqRef = doc(db, 'requests', requestId);
     const reqSnap = await getDoc(reqRef);
@@ -141,11 +159,19 @@ export const api = {
           await updateDoc(invRef, { Balance: currentBalance - parseInt(reqData.Quantity) });
        }
        
-       const txData = { TxID: 'TX-' + Date.now(), Date: new Date().toISOString(), Type: 'Out', ItemID: reqData.ItemID, Quantity: reqData.Quantity, RefReqID: requestId };
+       const txData = { 
+         TxID: 'TX-' + Date.now(), 
+         Date: new Date().toISOString(), 
+         Type: 'Out', 
+         ItemID: reqData.ItemID, 
+         Quantity: reqData.Quantity, 
+         RefReqID: requestId,
+         FulfillerName: fulfillerName || 'Admin'
+       };
        await setDoc(doc(db, 'transactions', txData.TxID), txData);
     }
     // 2. แบ็กอัปไป GAS
-    backupToGAS({ action: 'fulfillRequest', requestId });
+    backupToGAS({ action: 'fulfillRequest', requestId, fulfillerName });
     return { status: 'success' };
   },
 
@@ -166,6 +192,38 @@ export const api = {
        await setDoc(doc(db, 'transactions', txData.TxID), txData);
     }
     backupToGAS({ action: 'adjustStock', itemId, quantity });
+    return { status: 'success' };
+  },
+
+  async deleteTransaction(txId) {
+    await deleteDoc(doc(db, 'transactions', txId));
+    backupToGAS({ action: 'deleteTransaction', txId });
+    return { status: 'success' };
+  },
+
+  async batchRestock(items, restockerName, receiptUrl) {
+    const txIdBase = 'TX-IN-' + Date.now();
+    for(let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const invRef = doc(db, 'inventory', item.id);
+      const invSnap = await getDoc(invRef);
+      if(invSnap.exists()) {
+        const currentBalance = parseInt(invSnap.data().Balance) || 0;
+        await updateDoc(invRef, { Balance: currentBalance + parseInt(item.quantity) });
+        
+        const txData = {
+          TxID: `${txIdBase}-${i}`,
+          Date: new Date().toISOString(),
+          Type: 'In',
+          ItemID: item.id,
+          Quantity: item.quantity,
+          RestockerName: restockerName,
+          ReceiptURL: receiptUrl || ''
+        };
+        await setDoc(doc(db, 'transactions', txData.TxID), txData);
+      }
+    }
+    backupToGAS({ action: 'batchRestock', items, restockerName, receiptUrl });
     return { status: 'success' };
   },
 

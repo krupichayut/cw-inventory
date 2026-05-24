@@ -8,7 +8,9 @@ import Fulfillment from './pages/Fulfillment';
 import StockTake from './pages/StockTake';
 import Report from './pages/Report';
 import Departments from './pages/Departments';
-import { Package, User, ShieldAlert, ArrowLeft, Lock } from 'lucide-react';
+import Restock from './pages/Restock';
+import History from './pages/History';
+import { Package, User, ShieldAlert, ArrowLeft, Lock, PackageSearch, PackagePlus, Users, LayoutDashboard, ClipboardList, BarChart3, History as HistoryIcon } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import './App.css';
 
@@ -41,6 +43,8 @@ function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/inventory" element={<Inventory />} />
                   <Route path="/fulfillment" element={<Fulfillment />} />
+                  <Route path="/restock" element={<Restock />} />
+                  <Route path="/history" element={<History />} />
                   <Route path="/stocktake" element={<StockTake />} />
                   <Route path="/departments" element={<Departments />} />
                   <Route path="/report" element={<Report />} />

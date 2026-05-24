@@ -9,6 +9,7 @@ export default function Fulfillment() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
+  const [fulfillerName, setFulfillerName] = useState('');
 
   const loadData = async () => {
     setLoading(true);
@@ -18,12 +19,20 @@ export default function Fulfillment() {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    loadData(); 
+    const savedName = localStorage.getItem('fulfillerName');
+    if (savedName) setFulfillerName(savedName);
+  }, []);
 
   const handleFulfill = async (requestId) => {
+    if (!fulfillerName.trim()) {
+      return toast.error('กรุณาระบุชื่อผู้จ่ายของก่อนทำการจ่ายของ');
+    }
     setProcessing(requestId);
+    localStorage.setItem('fulfillerName', fulfillerName);
     try {
-      await api.fulfillRequest(requestId);
+      await api.fulfillRequest(requestId, fulfillerName);
       toast.success('จ่ายของและตัดสต๊อกเรียบร้อย', { duration: 3000 });
       loadData();
     } catch (e) {
@@ -79,7 +88,19 @@ export default function Fulfillment() {
       {loading ? <p>Loading...</p> : (
         <div className="fulfillment-grid">
           <div className="column pending-column">
-            <h2><Clock size={20} className="inline-icon text-warning" /> รอจัดของ ({pendingList.length})</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2><Clock size={20} className="inline-icon text-warning" /> รอจัดของ ({pendingList.length})</h2>
+              <div className="form-group" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ margin: 0, whiteSpace: 'nowrap' }}>ผู้จ่ายของ:</label>
+                <input 
+                  type="text" 
+                  value={fulfillerName} 
+                  onChange={e => setFulfillerName(e.target.value)} 
+                  placeholder="ชื่อผู้ดำเนินการ"
+                  style={{ padding: '0.4rem', width: '150px' }}
+                />
+              </div>
+            </div>
             <div className="request-list">
               {pendingList.map(req => (
                 <div key={req.id} className="req-card glass-panel">

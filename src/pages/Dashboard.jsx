@@ -225,7 +225,11 @@ export default function Dashboard() {
                 <div key={tx.TxID} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-base)', borderRadius: '8px' }}>
                   <div>
                     <div style={{ fontWeight: '500' }}>{inventoryMap[tx.ItemID] || tx.ItemID}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(tx.Date).toLocaleString('th-TH')}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      {new Date(tx.Date).toLocaleString('th-TH')} 
+                      {tx.FulfillerName && ` • โดย: ${tx.FulfillerName}`}
+                      {tx.RestockerName && ` • ผู้รับเข้า: ${tx.RestockerName}`}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <span style={{ 

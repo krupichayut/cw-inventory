@@ -9,10 +9,10 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [newItem, setNewItem] = useState({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '' });
+  const [newItem, setNewItem] = useState({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '', order: 999, baseUnit: 'ชิ้น', packUnit: '', packSize: 1 });
   const [uploading, setUploading] = useState(false);
   const [adjustModal, setAdjustModal] = useState({ show: false, item: null, qty: 1 });
-  const [editModal, setEditModal] = useState({ show: false, item: null, name: '', minStock: 0, category: '' });
+  const [editModal, setEditModal] = useState({ show: false, item: null, name: '', minStock: 0, category: '', order: 999, baseUnit: 'ชิ้น', packUnit: '', packSize: 1 });
 
   const loadData = async () => {
     setLoading(true);
@@ -37,7 +37,7 @@ export default function Inventory() {
     e.preventDefault();
     setUploading(true);
     try {
-      let uploadedUrl = '';
+      let uploadedUrl = newItem.imageUrl;
       if (newItem.imageFile) {
         uploadedUrl = await api.uploadImage(newItem.imageFile);
       }
@@ -45,10 +45,14 @@ export default function Inventory() {
         name: newItem.name,
         minStock: parseInt(newItem.minStock),
         category: newItem.category,
-        imageUrl: uploadedUrl
+        imageUrl: uploadedUrl,
+        order: newItem.order,
+        baseUnit: newItem.baseUnit,
+        packUnit: newItem.packUnit,
+        packSize: newItem.packSize
       });
       setShowModal(false);
-      setNewItem({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '' });
+      setNewItem({ name: '', minStock: 0, category: '', imageFile: null, imageUrl: '', order: 999, baseUnit: 'ชิ้น', packUnit: '', packSize: 1 });
       toast.success('เพิ่มพัสดุใหม่สำเร็จ');
       loadData();
     } catch (e) {
@@ -62,7 +66,6 @@ export default function Inventory() {
     const qty = parseInt(adjustModal.qty);
     const targetId = adjustModal.item.ID;
     
-    // Optimistic Update (เพื่อความรวดเร็ว)
     setItems(items.map(i => i.ID === targetId ? { ...i, Balance: parseInt(i.Balance || 0) + qty } : i));
     setAdjustModal({ show: false, item: null, qty: 1 });
     
@@ -71,7 +74,7 @@ export default function Inventory() {
       toast.success('อัปเดตสต๊อกสำเร็จ');
     } catch (e) {
       toast.error('Error: ' + e);
-      loadData(); // Revert on failure
+      loadData();
     }
   };
 
@@ -83,11 +86,14 @@ export default function Inventory() {
       id: targetId,
       name: editModal.name,
       minStock: parseInt(editModal.minStock),
-      category: editModal.category
+      category: editModal.category,
+      order: editModal.order,
+      baseUnit: editModal.baseUnit,
+      packUnit: editModal.packUnit,
+      packSize: editModal.packSize
     };
 
-    // Optimistic Update
-    setItems(items.map(i => i.ID === targetId ? { ...i, Name: updatedData.name, MinStock: updatedData.minStock, Category: updatedData.category } : i));
+    setItems(items.map(i => i.ID === targetId ? { ...i, Name: updatedData.name, MinStock: updatedData.minStock, Category: updatedData.category, Order: updatedData.order, BaseUnit: updatedData.baseUnit, PackUnit: updatedData.packUnit, PackSize: updatedData.packSize } : i));
     setEditModal({ show: false, item: null });
 
     try {
@@ -103,7 +109,6 @@ export default function Inventory() {
   const handleDeleteItem = async (id) => {
     if (!window.confirm('คุณแน่ใจหรือไม่ที่จะลบพัสดุนี้? ข้อมูลจะไม่สามารถกู้คืนได้')) return;
     
-    // Optimistic Update
     setItems(items.filter(i => i.ID !== id));
     
     try {
@@ -115,7 +120,9 @@ export default function Inventory() {
     }
   };
 
-  const filteredItems = items.filter(i => i.Name.toLowerCase().includes(search.toLowerCase()) || i.ID.toLowerCase().includes(search.toLowerCase()));
+  const filteredItems = items
+    .filter(i => i.Name?.toLowerCase().includes(search.toLowerCase()) || i.ID?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => (a.Order || 999) - (b.Order || 999));
 
   return (
     <div className="inventory-page">
@@ -139,67 +146,49 @@ export default function Inventory() {
       {loading ? (
         <div className="loading">กำลังโหลดข้อมูล...</div>
       ) : (
-        <div className="grid">
-          {filteredItems.map(item => {
-            const isLow = parseInt(item.Balance) <= parseInt(item.MinStock);
-            return (
-              <div key={item.ID} className={`card item-card ${isLow ? 'low-stock-card' : ''}`}>
-                <div className="item-img-container">
-                  {item.ImageURL ? (
-                    <img src={getDirectImageUrl(item.ImageURL)} alt={item.Name} className="item-img" />
-                  ) : (
-                    <div className="no-img"><ImageIcon size={40} /></div>
-                  )}
-                  {isLow && (
-                    <div className="low-stock-badge">
-                      <AlertTriangle size={14} /> ใกล้หมด
-                    </div>
-                  )}
-                </div>
-                <div className="item-info">
-                  <div className="item-id">{item.ID}</div>
-                  <h3 className="item-name">{item.Name}</h3>
-                  <div className="item-category">{item.Category}</div>
-                  <div className="item-stats">
-                    <div className="stat-box">
-                      <div className="stat-label">คงเหลือ</div>
-                      <div className={`stat-val ${isLow ? 'text-danger' : 'text-primary'}`}>
-                        {item.Balance}
-                      </div>
-                    </div>
-                    <div className="stat-box">
-                      <div className="stat-label">จุดวิกฤต</div>
-                      <div className="stat-val">{item.MinStock}</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ padding: '0.75rem', borderTop: '1px solid var(--border-light)', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                  <button 
-                    className={`btn ${isLow ? 'btn-primary' : 'btn-ghost'}`} 
-                    style={{ flex: 1, padding: '0.5rem' }}
-                    onClick={() => setAdjustModal({ show: true, item: item, qty: 1 })}
-                  >
-                    <PackagePlus size={16} /> เติมสต๊อก
-                  </button>
-                  <button 
-                    className="btn btn-ghost" 
-                    style={{ padding: '0.5rem' }}
-                    onClick={() => setEditModal({ show: true, item: item, name: item.Name, minStock: item.MinStock, category: item.Category })}
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button 
-                    className="btn btn-ghost text-danger" 
-                    style={{ padding: '0.5rem' }}
-                    onClick={() => handleDeleteItem(item.ID)}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <table className="inventory-table">
+          <thead>
+            <tr>
+              <th>ลำดับ</th>
+              <th>รหัส</th>
+              <th>ภาพ</th>
+              <th>ชื่อพัสดุ</th>
+              <th>หมวดหมู่</th>
+              <th className="text-right">คงเหลือ</th>
+              <th className="text-right">ขั้นต่ำ</th>
+              <th>หน่วย</th>
+              <th className="text-center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredItems.map(item => {
+              const isLow = parseInt(item.Balance) <= parseInt(item.MinStock);
+              return (
+                <tr key={item.ID} className={isLow ? 'low-stock' : ''}>
+                  <td>{item.Order || '-'}</td>
+                  <td className="item-id">{item.ID}</td>
+                  <td>
+                    {item.ImageURL ? (
+                      <img src={getDirectImageUrl(item.ImageURL)} alt={item.Name} className="table-img" />
+                    ) : (
+                      <div className="no-img-small"><ImageIcon size={16} /></div>
+                    )}
+                  </td>
+                  <td>{item.Name}</td>
+                  <td>{item.Category}</td>
+                  <td className="text-right">{item.Balance}</td>
+                  <td className="text-right">{item.MinStock}</td>
+                  <td>{item.BaseUnit || 'ชิ้น'}</td>
+                  <td className="text-center" style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                    <button className="btn btn-ghost" onClick={() => setAdjustModal({ show: true, item: item, qty: 1 })}><PackagePlus size={16} /></button>
+                    <button className="btn btn-ghost" onClick={() => setEditModal({ show: true, item: item, name: item.Name, minStock: item.MinStock, category: item.Category, order: item.Order || 999, baseUnit: item.BaseUnit || 'ชิ้น', packUnit: item.PackUnit || '', packSize: item.PackSize || 1 })}><Edit size={16} /></button>
+                    <button className="btn btn-ghost text-danger" onClick={() => handleDeleteItem(item.ID)}><Trash2 size={16} /></button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
 
       {showModal && (
@@ -220,15 +209,33 @@ export default function Inventory() {
                 <label>หมวดหมู่</label>
                 <input type="text" required value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} />
               </div>
-              <div className="form-group">
-                <label>จุดวิกฤต (Min Stock)</label>
-                <input type="number" required min="0" value={newItem.minStock} onChange={e => setNewItem({...newItem, minStock: e.target.value})} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>จำนวนสต๊อกขั้นต่ำ</label>
+                  <input type="number" required value={newItem.minStock} onChange={e => setNewItem({...newItem, minStock: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>ลำดับ (Order)</label>
+                  <input type="number" required value={newItem.order} onChange={e => setNewItem({...newItem, order: parseInt(e.target.value)})} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>หน่วยย่อย (เช่น ชิ้น)</label>
+                  <input type="text" required value={newItem.baseUnit} onChange={e => setNewItem({...newItem, baseUnit: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>หน่วยแพ็ค (ถ้ามี)</label>
+                  <input type="text" placeholder="เช่น กล่อง" value={newItem.packUnit} onChange={e => setNewItem({...newItem, packUnit: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>จำนวน/แพ็ค</label>
+                  <input type="number" min="1" value={newItem.packSize} onChange={e => setNewItem({...newItem, packSize: parseInt(e.target.value)})} disabled={!newItem.packUnit} />
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>ยกเลิก</button>
-                <button type="submit" className="btn btn-primary" disabled={uploading}>
-                  {uploading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
-                </button>
+                <button type="submit" className="btn btn-primary" disabled={uploading}>{uploading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}</button>
               </div>
             </form>
           </div>
@@ -276,9 +283,29 @@ export default function Inventory() {
                 <label>หมวดหมู่</label>
                 <input type="text" required value={editModal.category} onChange={e => setEditModal({...editModal, category: e.target.value})} />
               </div>
-              <div className="form-group">
-                <label>จุดวิกฤต (Min Stock)</label>
-                <input type="number" required min="0" value={editModal.minStock} onChange={e => setEditModal({...editModal, minStock: e.target.value})} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>จุดวิกฤต (Min Stock)</label>
+                  <input type="number" required min="0" value={editModal.minStock} onChange={e => setEditModal({...editModal, minStock: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>ลำดับ (Order)</label>
+                  <input type="number" required value={editModal.order} onChange={e => setEditModal({...editModal, order: parseInt(e.target.value)})} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>หน่วยย่อย (เช่น ชิ้น)</label>
+                  <input type="text" required value={editModal.baseUnit} onChange={e => setEditModal({...editModal, baseUnit: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>หน่วยแพ็ค (ถ้ามี)</label>
+                  <input type="text" placeholder="เช่น กล่อง" value={editModal.packUnit} onChange={e => setEditModal({...editModal, packUnit: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>จำนวน/แพ็ค</label>
+                  <input type="number" min="1" value={editModal.packSize} onChange={e => setEditModal({...editModal, packSize: parseInt(e.target.value)})} disabled={!editModal.packUnit} />
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setEditModal({ show: false, item: null })}>ยกเลิก</button>

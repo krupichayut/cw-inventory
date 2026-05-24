@@ -18,21 +18,30 @@ export default function Requisition() {
     const loadData = async () => {
       setLoading(true);
       const data = await api.getData();
-      setItems(data.inventory.filter(i => parseInt(i.Balance) > 0)); // Only show items with stock
+      setItems(data.inventory
+        .filter(i => parseInt(i.Balance) > 0)
+        .sort((a, b) => (a.Order || 999) - (b.Order || 999))
+      );
       setDepartments(data.departments || []);
       setLoading(false);
     };
     loadData();
   }, []);
 
-  const addToCart = (item) => {
+  const addToCart = (item, qtyToAdd = 1) => {
     const existing = cart.find(c => c.id === item.ID);
     if (existing) {
-      if (existing.quantity < item.Balance) {
-        setCart(cart.map(c => c.id === item.ID ? { ...c, quantity: c.quantity + 1 } : c));
+      if (existing.quantity + qtyToAdd <= item.Balance) {
+        setCart(cart.map(c => c.id === item.ID ? { ...c, quantity: c.quantity + qtyToAdd } : c));
+      } else {
+        toast.error(`ไม่สามารถเพิ่มได้ สต๊อกคงเหลือไม่พอ (เหลือ ${item.Balance})`);
       }
     } else {
-      setCart([...cart, { id: item.ID, name: item.Name, max: parseInt(item.Balance), quantity: 1, image: item.ImageURL }]);
+      if (qtyToAdd <= item.Balance) {
+        setCart([...cart, { id: item.ID, name: item.Name, max: parseInt(item.Balance), quantity: qtyToAdd, image: item.ImageURL, baseUnit: item.BaseUnit || 'ชิ้น' }]);
+      } else {
+        toast.error(`สต๊อกคงเหลือไม่พอ (เหลือ ${item.Balance})`);
+      }
     }
   };
 
@@ -121,10 +130,19 @@ export default function Requisition() {
                     <div className="list-info" style={{ flex: 1 }}>
                       <h4 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{item.Name}</h4>
                       <div style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px', display: 'inline-block', fontWeight: 'bold' }}>
-                        คงเหลือ: {item.Balance}
+                        คงเหลือ: {item.Balance} {item.BaseUnit || 'ชิ้น'}
                       </div>
                     </div>
-                    <button className="btn btn-primary" onClick={() => addToCart(item)}><Plus size={20} /></button>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                      <button className="btn btn-primary" onClick={() => addToCart(item, 1)} style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                        <Plus size={16} className="inline-icon" /> 1 {item.BaseUnit || 'ชิ้น'}
+                      </button>
+                      {item.PackUnit && item.PackSize > 1 && (
+                        <button className="btn btn-ghost" onClick={() => addToCart(item, item.PackSize)} style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', border: '1px solid var(--primary)', color: 'var(--primary)' }}>
+                          <Plus size={16} className="inline-icon" /> 1 {item.PackUnit}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -141,10 +159,11 @@ export default function Requisition() {
                     <div className="cart-item-info">
                       <div className="font-medium">{c.name}</div>
                     </div>
-                    <div className="cart-controls" style={{ marginTop: '0.5rem' }}>
+                    <div className="cart-controls" style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center' }}>
                       <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, -1)}><Minus size={16} /></button>
-                      <span className="qty" style={{ width: '30px', textAlign: 'center' }}>{c.quantity}</span>
+                      <span className="qty" style={{ width: '40px', textAlign: 'center' }}>{c.quantity}</span>
                       <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, 1)}><Plus size={16} /></button>
+                      <span className="text-muted" style={{ fontSize: '0.85rem', marginLeft: '0.5rem', flex: 1 }}>{c.baseUnit}</span>
                       <button type="button" className="ctrl-btn text-danger ml-2" onClick={() => remove(c.id)}><Trash2 size={16} /></button>
                     </div>
                   </div>
@@ -177,7 +196,8 @@ export default function Requisition() {
                 <tr>
                   <th>ลำดับ</th>
                   <th>ชื่อพัสดุ</th>
-                  <th style={{ textAlign: 'center' }}>จำนวนที่เบิก</th>
+                  <th style={{ textAlign: 'center' }}>จำนวน</th>
+                  <th>หน่วย</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,6 +206,7 @@ export default function Requisition() {
                     <td>{index + 1}</td>
                     <td>{c.name}</td>
                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--primary)' }}>{c.quantity}</td>
+                    <td>{c.baseUnit}</td>
                   </tr>
                 ))}
               </tbody>

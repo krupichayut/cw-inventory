@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
-import { ShoppingCart, Plus, Minus, Trash2, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, ArrowRight, ArrowLeft, CheckCircle, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ImagePreviewModal from '../components/ImagePreviewModal';
 import './Requisition.css';
 
 export default function Requisition() {
@@ -13,6 +14,7 @@ export default function Requisition() {
   const [department, setDepartment] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -143,7 +145,13 @@ export default function Requisition() {
               <div className="item-list">
                 {items.map(item => (
                   <div key={item.ID} className="list-card glass-panel" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <img src={item.ImageURL ? getDirectImageUrl(item.ImageURL) : 'https://via.placeholder.com/60'} alt={item.Name} className="list-img" />
+                    <img 
+                      src={item.ImageURL ? getDirectImageUrl(item.ImageURL) : 'https://via.placeholder.com/60'} 
+                      alt={item.Name} 
+                      className="list-img" 
+                      style={{ cursor: item.ImageURL ? 'pointer' : 'default', transition: 'transform 0.2s', hover: { transform: 'scale(1.05)' } }}
+                      onClick={() => item.ImageURL && setPreviewImage(getDirectImageUrl(item.ImageURL))}
+                    />
                     <div className="list-info" style={{ flex: 1 }}>
                       <h4 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{item.Name}</h4>
                       <div style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px', display: 'inline-block', fontWeight: 'bold' }}>
@@ -250,6 +258,7 @@ export default function Requisition() {
         </div>
       )}
       
+      <ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} />
     </div>
   );
 }

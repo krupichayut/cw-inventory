@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
 import { Plus, Search, AlertTriangle, Image as ImageIcon, PackagePlus, Edit, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ImagePreviewModal from '../components/ImagePreviewModal';
 import './Inventory.css';
 
 export default function Inventory() {
@@ -13,6 +14,7 @@ export default function Inventory() {
   const [uploading, setUploading] = useState(false);
   const [adjustModal, setAdjustModal] = useState({ show: false, item: null, qty: 1 });
   const [editModal, setEditModal] = useState({ show: false, item: null, name: '', minStock: 0, category: '', order: 999, baseUnit: 'ชิ้น', packUnit: '', packSize: 1 });
+  const [previewImage, setPreviewImage] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -173,7 +175,13 @@ export default function Inventory() {
                   <td className="item-id">{item.ID}</td>
                   <td>
                     {item.ImageURL ? (
-                      <img src={getDirectImageUrl(item.ImageURL)} alt={item.Name} className="table-img" />
+                      <img 
+                        src={getDirectImageUrl(item.ImageURL)} 
+                        alt={item.Name} 
+                        className="table-img" 
+                        style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                        onClick={() => setPreviewImage(getDirectImageUrl(item.ImageURL))}
+                      />
                     ) : (
                       <div className="no-img-small"><ImageIcon size={16} /></div>
                     )}
@@ -324,6 +332,8 @@ export default function Inventory() {
           </div>
         </div>
       )}
+      
+      <ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} />
     </div>
   );
 }

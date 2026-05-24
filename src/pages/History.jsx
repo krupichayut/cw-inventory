@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
 import { Trash2, History as HistoryIcon, Search, Image as ImageIcon, Printer, Filter, Calendar } from 'lucide-react';
+import { formatDateTimeThai } from '../utils/format';
 import toast from 'react-hot-toast';
 import './History.css';
 
@@ -149,7 +150,7 @@ export default function History() {
             <tbody>
               {filteredTx.map(tx => (
                 <tr key={tx.TxID}>
-                  <td style={{ whiteSpace: 'nowrap' }}>{new Date(tx.Date).toLocaleString('th-TH')}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{formatDateTimeThai(tx.Date)}</td>
                   <td>
                     <span style={{ 
                       padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 'bold',

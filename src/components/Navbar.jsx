@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, CheckCircle, ClipboardList, FileText, LogOut, Lock, Users, PackagePlus, History } from 'lucide-react';
+import { LayoutDashboard, Package, CheckCircle, ClipboardList, FileText, LogOut, Lock, Users, PackagePlus, History, UserCog } from 'lucide-react';
 
 export default function Navbar({ onLogout, onChangePassword }) {
   return (
@@ -29,6 +29,9 @@ export default function Navbar({ onLogout, onChangePassword }) {
         </NavLink>
         <NavLink to="/admin/departments" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <Users size={20} /> ฝ่ายงาน
+        </NavLink>
+        <NavLink to="/admin/staff" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <UserCog size={20} /> เจ้าหน้าที่พัสดุ
         </NavLink>
         <NavLink to="/admin/report" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <FileText size={20} /> พิมพ์รายงาน

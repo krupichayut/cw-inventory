@@ -299,5 +299,30 @@ export const api = {
     backupToGAS({ action: 'deleteDepartment', id });
     api.clearCache();
     return { status: 'success' };
+  },
+
+  // --- Staff Management ---
+  async getStaff() {
+    const snap = await getDocs(collection(db, 'staff'));
+    let staffList = [];
+    snap.forEach(d => staffList.push(d.data()));
+    return staffList.sort((a, b) => (a.Name || '').localeCompare(b.Name || ''));
+  },
+  
+  async addStaff(staffData) {
+    const newId = 'STF-' + Date.now();
+    const data = { ID: newId, ...staffData };
+    await setDoc(doc(db, 'staff', newId), data);
+    return data;
+  },
+  
+  async updateStaff(id, staffData) {
+    await updateDoc(doc(db, 'staff', id), staffData);
+    return { status: 'success' };
+  },
+  
+  async deleteStaff(id) {
+    await deleteDoc(doc(db, 'staff', id));
+    return { status: 'success' };
   }
 };

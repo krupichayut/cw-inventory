@@ -140,19 +140,21 @@
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  z-index: 100;
-  padding: 1rem;
+  z-index: 1000;
+  padding: 2rem 1rem;
+  overflow-y: auto;
 }
 
 .modal-content {
   background: var(--bg-surface-solid);
-  padding: 2.5rem;
+  padding: 2rem;
   width: 100%;
   max-width: 650px;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
+  margin: auto;
 }
 
 .modal-content h2 {

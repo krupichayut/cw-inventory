@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { CheckCircle, Clock, Package, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatDateTimeThai } from '../utils/format';
 import './Fulfillment.css';
 
 export default function Fulfillment() {
@@ -10,19 +11,31 @@ export default function Fulfillment() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
   const [fulfillerName, setFulfillerName] = useState('');
+  const [staffList, setStaffList] = useState([]);
 
   const loadData = async () => {
     setLoading(true);
     const data = await api.getData();
     setRequests(data.requests);
     setInventory(data.inventory);
+    try {
+      const stf = await api.getStaff();
+      setStaffList(stf);
+    } catch(e) {}
     setLoading(false);
   };
 
   useEffect(() => { 
     loadData(); 
-    const savedName = localStorage.getItem('fulfillerName');
-    if (savedName) setFulfillerName(savedName);
+    let defaultName = '';
+    const adminUserStr = localStorage.getItem('adminUser');
+    if (adminUserStr) {
+      try {
+        defaultName = JSON.parse(adminUserStr).Name;
+      } catch(e){}
+    }
+    if (!defaultName) defaultName = localStorage.getItem('fulfillerName') || '';
+    setFulfillerName(defaultName);
   }, []);
 
   const handleFulfill = async (requestId) => {
@@ -61,7 +74,7 @@ export default function Fulfillment() {
     if (!acc[req.RequestID]) {
       acc[req.RequestID] = {
         id: req.RequestID,
-        date: new Date(req.Date).toLocaleString('th-TH'),
+        date: formatDateTimeThai(req.Date),
         requester: req.Requester,
         department: req.Department || '-',
         status: req.Status,
@@ -92,13 +105,17 @@ export default function Fulfillment() {
               <h2><Clock size={20} className="inline-icon text-warning" /> รอจัดของ ({pendingList.length})</h2>
               <div className="form-group" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <label style={{ margin: 0, whiteSpace: 'nowrap' }}>ผู้จ่ายของ:</label>
-                <input 
-                  type="text" 
+                <select 
                   value={fulfillerName} 
                   onChange={e => setFulfillerName(e.target.value)} 
-                  placeholder="ชื่อผู้ดำเนินการ"
-                  style={{ padding: '0.4rem', width: '150px' }}
-                />
+                  style={{ padding: '0.4rem', width: '160px', borderRadius: '4px', border: '1px solid var(--border-light)' }}
+                >
+                  <option value="">-- เลือกเจ้าหน้าที่ --</option>
+                  {staffList.map(s => <option key={s.ID} value={s.Name}>{s.Name}</option>)}
+                  {!staffList.find(s => s.Name === fulfillerName) && fulfillerName && (
+                    <option value={fulfillerName}>{fulfillerName}</option>
+                  )}
+                </select>
               </div>
             </div>
             <div className="request-list">

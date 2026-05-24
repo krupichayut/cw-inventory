@@ -9,6 +9,7 @@ export default function Restock() {
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState([]);
   const [restockerName, setRestockerName] = useState('');
+  const [staffList, setStaffList] = useState([]);
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptUrl, setReceiptUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,12 +20,23 @@ export default function Restock() {
       setLoading(true);
       const data = await api.getData();
       setItems(data.inventory.sort((a, b) => (a.Order || 999) - (b.Order || 999)));
+      try {
+        const stf = await api.getStaff();
+        setStaffList(stf);
+      } catch(e) {}
       setLoading(false);
     };
     loadData();
     
-    const savedName = localStorage.getItem('restockerName');
-    if (savedName) setRestockerName(savedName);
+    let defaultName = '';
+    const adminUserStr = localStorage.getItem('adminUser');
+    if (adminUserStr) {
+      try {
+        defaultName = JSON.parse(adminUserStr).Name;
+      } catch(e){}
+    }
+    if (!defaultName) defaultName = localStorage.getItem('restockerName') || '';
+    setRestockerName(defaultName);
   }, []);
 
   const handleImageChange = (e) => {
@@ -158,7 +170,18 @@ export default function Restock() {
         <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem' }}>
           <div className="form-group" style={{ marginBottom: '1rem' }}>
             <label>ชื่อผู้ดำเนินการรับเข้า <span className="text-danger">*</span></label>
-            <input type="text" required value={restockerName} onChange={e => setRestockerName(e.target.value)} placeholder="เช่น ครูสมหมาย" style={{ width: '100%' }} />
+            <select 
+              required 
+              value={restockerName} 
+              onChange={e => setRestockerName(e.target.value)} 
+              style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}
+            >
+              <option value="">-- เลือกเจ้าหน้าที่ --</option>
+              {staffList.map(s => <option key={s.ID} value={s.Name}>{s.Name}</option>)}
+              {!staffList.find(s => s.Name === restockerName) && restockerName && (
+                <option value={restockerName}>{restockerName}</option>
+              )}
+            </select>
           </div>
 
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>

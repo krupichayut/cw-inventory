@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
@@ -10,8 +10,10 @@ import Report from './pages/Report';
 import Departments from './pages/Departments';
 import Restock from './pages/Restock';
 import History from './pages/History';
-import { Package, User, ShieldAlert, ArrowLeft, Lock, PackageSearch, PackagePlus, Users, LayoutDashboard, ClipboardList, BarChart3, History as HistoryIcon } from 'lucide-react';
+import StaffSettings from './pages/StaffSettings';
+import { Package, User, ShieldAlert, ArrowLeft, Lock, PackageSearch, PackagePlus, Users, LayoutDashboard, ClipboardList, BarChart3, History as HistoryIcon, UserCog } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
+import { api } from './utils/api';
 import './App.css';
 
 function App() {
@@ -50,6 +52,7 @@ function App() {
                   <Route path="/stocktake" element={<StockTake />} />
                   <Route path="/departments" element={<Departments />} />
                   <Route path="/report" element={<Report />} />
+                  <Route path="/staff" element={<StaffSettings />} />
                   <Route path="*" element={<Navigate to="/admin" />} />
                 </Routes>
               </main>
@@ -76,7 +79,7 @@ function Landing() {
     <div className="landing-page flex items-center justify-center min-h-screen">
       <div className="glass-panel text-center p-8 animate-fade-in" style={{ maxWidth: '500px', margin: '0 auto', marginTop: '10vh' }}>
         <img src="/logo.jpg" alt="โรงเรียนไชยาวิทยา" style={{ width: '130px', height: '130px', objectFit: 'cover', margin: '0 auto 1.5rem auto', borderRadius: '50%', boxShadow: 'var(--shadow-md)', border: '4px solid white' }} />
-        <h1 className="page-title" style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>ระบบพัสดุโรงเรียนไชยาวิทยา</h1>
+        <h1 className="page-title" style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>ระบบเบิกพัสดุกลาง โรงเรียนไชยาวิทยา</h1>
         <p className="text-muted mb-6">กรุณาเลือกรูปแบบการเข้าใช้งาน</p>
         
         <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -109,39 +112,101 @@ function RequesterHeader() {
 }
 
 function AdminLogin({ onLogin }) {
+  const [staffList, setStaffList] = useState([]);
+  const [selectedStaffId, setSelectedStaffId] = useState('');
   const [pin, setPin] = useState('');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const list = await api.getStaff();
+        setStaffList(list);
+        if (list.length > 0) {
+          setSelectedStaffId(list[0].ID);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      setLoading(false);
+    };
+    fetchStaff();
+  }, []);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const savedPin = localStorage.getItem('adminPin') || '1234';
-    if (pin === savedPin) { 
+    if (staffList.length === 0) {
+      // Fallback to default PIN if no staff exists
+      const savedPin = localStorage.getItem('adminPin') || '1234';
+      if (pin === savedPin) { 
+        localStorage.setItem('isAdminAuth', 'true');
+        localStorage.setItem('adminUser', JSON.stringify({ ID: 'admin', Name: 'ผู้ดูแลระบบสูงสุด', Position: 'Admin' }));
+        toast.success('เข้าสู่ระบบสำเร็จ (โหมดผู้ดูแลเริ่มต้น)');
+        onLogin();
+      } else {
+        toast.error('รหัสผ่านไม่ถูกต้อง');
+      }
+      return;
+    }
+
+    const staff = staffList.find(s => s.ID === selectedStaffId);
+    if (!staff) {
+      return toast.error('กรุณาเลือกชื่อเจ้าหน้าที่');
+    }
+    
+    // Check password (plain text for now)
+    if (staff.Password === pin || (staff.Password === undefined && pin === '1234')) {
       localStorage.setItem('isAdminAuth', 'true');
-      toast.success('เข้าสู่ระบบสำเร็จ');
+      localStorage.setItem('adminUser', JSON.stringify(staff));
+      toast.success(`ยินดีต้อนรับคุณ ${staff.Name}`);
       onLogin();
     } else {
-      toast.error('รหัสผ่านไม่ถูกต้อง');
+      toast.error('รหัสผ่านส่วนตัวไม่ถูกต้อง');
     }
   };
 
+  if (loading) return <div className="landing-page flex items-center justify-center min-h-screen">Loading...</div>;
+
   return (
     <div className="landing-page flex items-center justify-center min-h-screen">
-      <div className="glass-panel text-center p-8 animate-fade-in" style={{ maxWidth: '400px', margin: '0 auto', marginTop: '15vh' }}>
+      <div className="glass-panel text-center p-8 animate-fade-in" style={{ maxWidth: '400px', margin: '0 auto', marginTop: '15vh', width: '100%' }}>
         <ShieldAlert size={48} className="text-secondary mx-auto mb-4" />
-        <h2 className="mb-4">เข้าสู่ระบบผู้ดูแล</h2>
+        <h2 className="mb-4">เข้าสู่ระบบเจ้าหน้าที่</h2>
         <form onSubmit={handleLogin}>
-          <input 
-            type="password" 
-            placeholder="รหัส PIN ผู้ดูแลระบบ" 
-            className="w-full p-2 mb-4" 
-            style={{ border: '1px solid #ccc', borderRadius: '8px', textAlign: 'center', fontSize: '1.2rem', padding: '0.75rem' }}
-            value={pin}
-            onChange={e => setPin(e.target.value)}
-            autoFocus
-          />
+          {staffList.length > 0 && (
+            <div className="form-group text-left" style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-muted)', fontSize: '0.9rem' }}>เลือกชื่อเข้าใช้งาน</label>
+              <select 
+                value={selectedStaffId} 
+                onChange={e => setSelectedStaffId(e.target.value)}
+                style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-light)', fontSize: '1.05rem', background: 'var(--bg-base)' }}
+              >
+                {staffList.map(s => (
+                  <option key={s.ID} value={s.ID}>{s.Name} ({s.Position})</option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          <div className="form-group text-left" style={{ marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              {staffList.length === 0 ? 'รหัสผ่านส่วนกลาง (เริ่มต้น 1234)' : 'รหัสผ่านส่วนตัว'}
+            </label>
+            <input 
+              type="password" 
+              placeholder={staffList.length === 0 ? "รหัส PIN กลาง" : "รหัสผ่านของคุณ"} 
+              className="w-full" 
+              style={{ border: '1px solid var(--border-light)', borderRadius: '8px', fontSize: '1.1rem', padding: '0.85rem', width: '100%', textAlign: 'center', letterSpacing: '2px' }}
+              value={pin}
+              onChange={e => setPin(e.target.value)}
+              autoFocus
+            />
+          </div>
+
           <div className="flex" style={{ display: 'flex', gap: '1rem' }}>
-             <button type="button" className="btn btn-ghost flex-1" style={{width: '100%'}} onClick={() => navigate('/')}>ยกเลิก</button>
-             <button type="submit" className="btn btn-secondary flex-1" style={{width: '100%'}}>เข้าสู่ระบบ</button>
+             <button type="button" className="btn btn-ghost flex-1" style={{width: '100%', padding: '0.85rem'}} onClick={() => navigate('/')}>กลับ</button>
+             <button type="submit" className="btn btn-secondary flex-1" style={{width: '100%', padding: '0.85rem'}}>เข้าสู่ระบบ</button>
           </div>
         </form>
       </div>

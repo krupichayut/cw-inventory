@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
 import { LayoutDashboard, Package, AlertTriangle, Clock, TrendingUp, Activity, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { formatDateTimeThai } from '../utils/format';
 import './Inventory.css';
 
 export default function Dashboard() {
@@ -235,7 +236,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight: '600', fontSize: '1.05rem' }}>{inventoryMap[tx.ItemID] || tx.ItemID}</div>
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                         <Clock size={12} className="inline-icon" /> 
-                        {new Date(tx.Date).toLocaleString('th-TH')} 
+                        {formatDateTimeThai(tx.Date)} 
                         {tx.FulfillerName && ` • จ่ายโดย: ${tx.FulfillerName}`}
                         {tx.RestockerName && ` • รับเข้าโดย: ${tx.RestockerName}`}
                       </div>

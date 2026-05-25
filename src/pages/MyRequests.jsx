@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../utils/api';
+import { api, getDirectImageUrl } from '../utils/api';
 import { formatDateTimeThai } from '../utils/format';
 import { Search, Clock, CheckCircle, Package, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -67,7 +67,7 @@ export default function MyRequests() {
     acc[req.RequestID].items.push({
       ...req,
       name: invItem ? invItem.Name : req.ItemID,
-      image: invItem ? invItem.ImageURL : null,
+      image: invItem ? getDirectImageUrl(invItem.ImageURL) : null,
       baseUnit: invItem ? invItem.BaseUnit : 'ชิ้น'
     });
     return acc;
@@ -87,7 +87,7 @@ export default function MyRequests() {
 
       <div className="glass-panel p-4 mb-6">
         <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="search-box flex-1">
+          <div className="search-bar flex-1" style={{ margin: 0 }}>
             <Search size={18} className="text-muted" />
             <input 
               type="text" 
@@ -154,15 +154,15 @@ export default function MyRequests() {
                 <ul className="item-list">
                   {req.items.map((item, idx) => (
                     <li key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1 overflow-hidden">
                         {item.image ? (
                           <img src={item.image} alt={item.name} className="item-thumb" />
                         ) : (
                           <div className="item-thumb-placeholder"><Package size={16} /></div>
                         )}
-                        <span className="item-name">{item.name}</span>
+                        <span className="item-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
                       </div>
-                      <span className="item-qty font-medium">
+                      <span className="item-qty font-medium" style={{ whiteSpace: 'nowrap', marginLeft: '1rem', minWidth: 'max-content' }}>
                         {item.Quantity} {item.baseUnit}
                       </span>
                     </li>

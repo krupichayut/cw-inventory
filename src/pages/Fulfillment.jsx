@@ -88,6 +88,24 @@ export default function Fulfillment() {
     setProcessing(null);
   };
 
+  const handleUndoFulfillAll = async (requestId, items) => {
+    if (!window.confirm('คุณต้องการดึงพัสดุทุกชิ้นในคำขอนี้กลับเข้าคลัง และเปลี่ยนสถานะกลับเป็นรอดำเนินการหรือไม่?')) return;
+    setProcessing(requestId + '_undo_all');
+    try {
+      for (const it of items) {
+        if (it.itemStatus === 'Fulfilled') {
+          await api.undoFulfillItem(requestId, it.ItemID);
+        }
+      }
+      toast.success('ดึงของกลับเข้าคลังทั้งหมดเรียบร้อย', { duration: 2000 });
+      loadData();
+    } catch (e) {
+      toast.error('Error: ' + (e.message || e));
+      loadData();
+    }
+    setProcessing(null);
+  };
+
   const handleDeleteRequest = async (requestId, isFulfilled) => {
     if (!window.confirm('คุณแน่ใจหรือไม่ที่จะลบรายการเบิกทั้งคำขอนี้?' + (isFulfilled ? '\n\n(คำเตือน: การลบรายการนี้จะไม่ส่งผลต่อจำนวนสต๊อกในคลัง หากพบข้อผิดพลาด กรุณาไปกดยกเลิกรายชิ้นเพื่อคืนสต๊อกก่อนลบ)' : ''))) return;
     
@@ -269,6 +287,18 @@ export default function Fulfillment() {
                         </div>
                       ))}
                     </div>
+                    {!allCompleted && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 text-center">
+                        <button 
+                          className="btn btn-outline btn-sm text-warning w-full"
+                          onClick={() => handleUndoFulfillAll(req.id, req.items)}
+                          disabled={processing === req.id + '_undo_all'}
+                          style={{ fontSize: '0.85rem' }}
+                        >
+                          <Undo2 size={14} className="mr-1 inline-block" /> ยกเลิกจ่ายทั้งคำขอนี้
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}

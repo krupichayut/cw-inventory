@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc, query, where } from 'firebase/firestore';
 
 export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzXM2X88G_b6PGlcB9fjJ9frOhcUkA-WYvbmmKH1sWs9eqGb1eIKGZmy11ChbbpNy0/exec';
 
@@ -65,7 +65,7 @@ export const api = {
         
         // Save to Firebase
         for(let item of gasData.inventory || []) await setDoc(doc(db, 'inventory', item.ID), item);
-        for(let req of gasData.requests || []) await setDoc(doc(db, 'requests', req.RequestID), req);
+        for(let req of gasData.requests || []) await setDoc(doc(db, 'requests', req.RequestID + '_' + req.ItemID), req);
         for(let dep of gasData.departments || []) await setDoc(doc(db, 'departments', dep.ID), dep);
         for(let tx of gasData.transactions || []) await setDoc(doc(db, 'transactions', tx.TxID), tx);
         
@@ -182,7 +182,7 @@ export const api = {
     const gasData = await gasRes.json();
     for(let req of gasData.requests || []) {
       if(req.Requester === requester && req.Status === 'Pending') {
-        await setDoc(doc(db, 'requests', req.RequestID), req);
+        await setDoc(doc(db, 'requests', req.RequestID + '_' + req.ItemID), req);
       }
     }
     api.clearCache();
@@ -191,11 +191,13 @@ export const api = {
 
   async fulfillRequest(requestId, fulfillerName) {
     // 1. อัปเดตฝั่ง Firebase ทันที (เพื่อให้ UI เร็ว)
-    const reqRef = doc(db, 'requests', requestId);
-    const reqSnap = await getDoc(reqRef);
-    if (reqSnap.exists()) {
-       const reqData = reqSnap.data();
-       await updateDoc(reqRef, { Status: 'Fulfilled' });
+    const q = query(collection(db, 'requests'), where('RequestID', '==', requestId));
+    const reqSnap = await getDocs(q);
+    
+    let txCount = 0;
+    for (const docSnap of reqSnap.docs) {
+       const reqData = docSnap.data();
+       await updateDoc(docSnap.ref, { Status: 'Fulfilled' });
        
        const invRef = doc(db, 'inventory', reqData.ItemID);
        const invSnap = await getDoc(invRef);
@@ -205,7 +207,7 @@ export const api = {
        }
        
        const txData = { 
-         TxID: 'TX-' + Date.now(), 
+         TxID: 'TX-' + Date.now() + '-' + txCount, 
          Date: new Date().toISOString(), 
          Type: 'Out', 
          ItemID: reqData.ItemID, 
@@ -215,6 +217,7 @@ export const api = {
          RequesterName: reqData.Requester || ''
        };
        await setDoc(doc(db, 'transactions', txData.TxID), txData);
+       txCount++;
     }
     // 2. แบ็กอัปไป GAS
     backupToGAS({ action: 'fulfillRequest', requestId, fulfillerName });
@@ -223,7 +226,11 @@ export const api = {
   },
 
   async deleteRequest(requestId) {
-    await deleteDoc(doc(db, 'requests', requestId));
+    const q = query(collection(db, 'requests'), where('RequestID', '==', requestId));
+    const reqSnap = await getDocs(q);
+    for (const docSnap of reqSnap.docs) {
+      await deleteDoc(docSnap.ref);
+    }
     backupToGAS({ action: 'deleteRequest', requestId });
     api.clearCache();
     return { status: 'success' };

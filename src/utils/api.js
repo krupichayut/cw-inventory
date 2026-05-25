@@ -65,7 +65,10 @@ export const api = {
         
         // Save to Firebase
         for(let item of gasData.inventory || []) await setDoc(doc(db, 'inventory', item.ID), item);
-        for(let req of gasData.requests || []) await setDoc(doc(db, 'requests', req.RequestID + '_' + req.ItemID), req);
+        for(let req of gasData.requests || []) {
+          req.docId = req.RequestID + '_' + req.ItemID;
+          await setDoc(doc(db, 'requests', req.docId), req);
+        }
         for(let dep of gasData.departments || []) await setDoc(doc(db, 'departments', dep.ID), dep);
         for(let tx of gasData.transactions || []) await setDoc(doc(db, 'transactions', tx.TxID), tx);
         
@@ -81,7 +84,7 @@ export const api = {
         getDocs(collection(db, 'transactions'))
       ]);
       
-      let requests = []; reqSnap.forEach(d => requests.push(d.data()));
+      let requests = []; reqSnap.forEach(d => requests.push({ ...d.data(), docId: d.id }));
       let departments = []; depSnap.forEach(d => departments.push(d.data()));
       let transactions = []; txSnap.forEach(d => transactions.push(d.data()));
 
@@ -225,8 +228,7 @@ export const api = {
     return { status: 'success' };
   },
 
-  async fulfillItem(requestId, itemId, fulfillerName) {
-    const docId = requestId + '_' + itemId;
+  async fulfillItem(docId, fulfillerName, fulfillQty = null) {
     const reqRef = doc(db, 'requests', docId);
     const reqSnap = await getDoc(reqRef);
     if (!reqSnap.exists()) throw new Error('Item not found');
@@ -234,13 +236,31 @@ export const api = {
     const reqData = reqSnap.data();
     if (reqData.Status !== 'Pending') return { status: 'already_fulfilled' };
     
-    await updateDoc(reqRef, { Status: 'Fulfilled' });
+    const qty = parseInt(reqData.Quantity) || 1;
+    const qtyToFulfill = fulfillQty ? parseInt(fulfillQty) : qty;
+    
+    if (qtyToFulfill <= 0) return { status: 'success' };
+    
+    const requestId = reqData.RequestID;
+    
+    if (qtyToFulfill < qty) {
+       await updateDoc(reqRef, { Quantity: qty - qtyToFulfill });
+       
+       const newDocId = docId + '_split_' + Date.now();
+       await setDoc(doc(db, 'requests', newDocId), {
+         ...reqData,
+         Quantity: qtyToFulfill,
+         Status: 'Fulfilled'
+       });
+    } else {
+       await updateDoc(reqRef, { Status: 'Fulfilled' });
+    }
     
     const invRef = doc(db, 'inventory', reqData.ItemID);
     const invSnap = await getDoc(invRef);
     if (invSnap.exists()) {
        const currentBalance = parseInt(invSnap.data().Balance) || 0;
-       await updateDoc(invRef, { Balance: currentBalance - parseInt(reqData.Quantity) });
+       await updateDoc(invRef, { Balance: currentBalance - qtyToFulfill });
     }
     
     const txData = { 
@@ -248,7 +268,7 @@ export const api = {
       Date: new Date().toISOString(), 
       Type: 'Out', 
       ItemID: reqData.ItemID, 
-      Quantity: reqData.Quantity, 
+      Quantity: qtyToFulfill, 
       RefReqID: requestId,
       FulfillerName: fulfillerName || 'Admin',
       RequesterName: reqData.Requester || ''
@@ -266,8 +286,7 @@ export const api = {
     return { status: 'success' };
   },
 
-  async undoFulfillItem(requestId, itemId) {
-    const docId = requestId + '_' + itemId;
+  async undoFulfillItem(docId) {
     const reqRef = doc(db, 'requests', docId);
     const reqSnap = await getDoc(reqRef);
     if (!reqSnap.exists()) throw new Error('Item not found');
@@ -277,17 +296,24 @@ export const api = {
     
     await updateDoc(reqRef, { Status: 'Pending' });
     
+    const qty = parseInt(reqData.Quantity) || 1;
+    
     const invRef = doc(db, 'inventory', reqData.ItemID);
     const invSnap = await getDoc(invRef);
     if (invSnap.exists()) {
        const currentBalance = parseInt(invSnap.data().Balance) || 0;
-       await updateDoc(invRef, { Balance: currentBalance + parseInt(reqData.Quantity) });
+       await updateDoc(invRef, { Balance: currentBalance + qty });
     }
     
-    const q = query(collection(db, 'transactions'), where('RefReqID', '==', requestId), where('ItemID', '==', itemId), where('Type', '==', 'Out'));
+    const q = query(collection(db, 'transactions'), 
+      where('RefReqID', '==', reqData.RequestID), 
+      where('ItemID', '==', reqData.ItemID), 
+      where('Type', '==', 'Out'),
+      where('Quantity', '==', qty)
+    );
     const txSnap = await getDocs(q);
-    for (let d of txSnap.docs) {
-      await deleteDoc(d.ref);
+    if (txSnap.docs.length > 0) {
+      await deleteDoc(txSnap.docs[0].ref);
     }
     
     api.clearCache();

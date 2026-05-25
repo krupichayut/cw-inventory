@@ -12,9 +12,10 @@ export default function Fulfillment() {
   const [processing, setProcessing] = useState(null);
   const [fulfillerName, setFulfillerName] = useState('');
   const [staffList, setStaffList] = useState([]);
+  const [editQty, setEditQty] = useState({});
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     const data = await api.getData();
     setRequests(data.requests);
     setInventory(data.inventory);
@@ -22,7 +23,7 @@ export default function Fulfillment() {
       const stf = await api.getStaff();
       setStaffList(stf);
     } catch(e) {}
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   useEffect(() => { 
@@ -38,29 +39,39 @@ export default function Fulfillment() {
     setFulfillerName(defaultName);
   }, []);
 
-  const handleFulfillItem = async (requestId, itemId) => {
+  const handleFulfillItem = async (requestId, docId, maxQty) => {
     if (!fulfillerName.trim()) {
       return toast.error('กรุณาระบุชื่อผู้จ่ายของ');
     }
-    setProcessing(requestId + itemId);
+    const qtyToFulfill = editQty[docId] !== undefined ? editQty[docId] : maxQty;
+    if (qtyToFulfill <= 0 || qtyToFulfill > maxQty) {
+      return toast.error('จำนวนไม่ถูกต้อง');
+    }
+    
+    setProcessing(docId);
     localStorage.setItem('fulfillerName', fulfillerName);
     try {
-      await api.fulfillItem(requestId, itemId, fulfillerName);
+      await api.fulfillItem(docId, fulfillerName, qtyToFulfill);
       toast.success('จ่ายของเรียบร้อย', { duration: 2000 });
-      loadData();
+      setEditQty(prev => {
+        const next = {...prev};
+        delete next[docId];
+        return next;
+      });
+      loadData(true);
     } catch (e) {
       toast.error('Error: ' + (e.message || e));
     }
     setProcessing(null);
   };
 
-  const handleUndoFulfillItem = async (requestId, itemId) => {
+  const handleUndoFulfillItem = async (requestId, docId) => {
     if (!window.confirm('คุณต้องการดึงพัสดุชิ้นนี้กลับเข้าคลัง และเปลี่ยนสถานะกลับเป็นรอดำเนินการหรือไม่?')) return;
-    setProcessing(requestId + itemId);
+    setProcessing(docId);
     try {
-      await api.undoFulfillItem(requestId, itemId);
+      await api.undoFulfillItem(docId);
       toast.success('ดึงของกลับเข้าคลังเรียบร้อย', { duration: 2000 });
-      loadData();
+      loadData(true);
     } catch (e) {
       toast.error('Error: ' + (e.message || e));
     }
@@ -68,22 +79,20 @@ export default function Fulfillment() {
   };
 
   const handleFulfillAll = async (requestId, items) => {
-    if (!fulfillerName.trim()) {
-      return toast.error('กรุณาระบุชื่อผู้จ่ายของ');
-    }
+    if (!fulfillerName.trim()) return toast.error('กรุณาระบุชื่อผู้จ่ายของ');
     setProcessing(requestId + '_all');
     localStorage.setItem('fulfillerName', fulfillerName);
     try {
       for (const it of items) {
         if (it.itemStatus === 'Pending') {
-          await api.fulfillItem(requestId, it.ItemID, fulfillerName);
+          await api.fulfillItem(it.docId, fulfillerName, it.Quantity);
         }
       }
-      toast.success('จ่ายของครบทุกรายการ', { duration: 2000 });
-      loadData();
+      toast.success('จ่ายของที่เหลือครบทุกรายการ', { duration: 2000 });
+      loadData(true);
     } catch (e) {
       toast.error('Error: ' + (e.message || e));
-      loadData();
+      loadData(true);
     }
     setProcessing(null);
   };
@@ -94,14 +103,14 @@ export default function Fulfillment() {
     try {
       for (const it of items) {
         if (it.itemStatus === 'Fulfilled') {
-          await api.undoFulfillItem(requestId, it.ItemID);
+          await api.undoFulfillItem(it.docId);
         }
       }
       toast.success('ดึงของกลับเข้าคลังทั้งหมดเรียบร้อย', { duration: 2000 });
-      loadData();
+      loadData(true);
     } catch (e) {
       toast.error('Error: ' + (e.message || e));
-      loadData();
+      loadData(true);
     }
     setProcessing(null);
   };
@@ -112,10 +121,10 @@ export default function Fulfillment() {
     setRequests(requests.filter(r => r.RequestID !== requestId));
     try {
       await api.deleteRequest(requestId);
-      loadData();
+      loadData(true);
     } catch (e) {
       alert('Error: ' + e);
-      loadData();
+      loadData(true);
     }
   };
 
@@ -158,7 +167,7 @@ export default function Fulfillment() {
   return (
     <div className="fulfillment-page animate-fade-in">
       <h1 className="page-title">รายการขอเบิก (Fulfillment Center)</h1>
-      <p className="text-muted mb-4">สามารถเลือกจ่ายพัสดุทีละรายการ หรือกดจ่ายทั้งหมดในคำขอเดียวก็ได้</p>
+      <p className="text-muted mb-4">สามารถเลือกจ่ายพัสดุทีละรายการ ระบุจำนวนชิ้นที่จ่ายได้ หรือกดจ่ายทั้งหมดในคำขอเดียวก็ได้</p>
 
       {loading ? <p>Loading...</p> : (
         <div className="fulfillment-grid">
@@ -182,7 +191,11 @@ export default function Fulfillment() {
             </div>
             
             <div className="request-list">
-              {pendingList.map(req => (
+              {pendingList.map(req => {
+                const pCount = req.items.filter(i => i.itemStatus === 'Pending').length;
+                const fCount = req.items.filter(i => i.itemStatus === 'Fulfilled').length;
+                
+                return (
                 <div key={req.id} className="req-card glass-panel">
                   <div className="req-header">
                     <div>
@@ -198,35 +211,58 @@ export default function Fulfillment() {
                   </div>
                   
                   <div className="req-body">
+                    <div className="text-sm font-medium text-muted mb-2 px-1 flex justify-between">
+                      <span>รายการทั้งหมด {req.items.length} รายการ</span>
+                      <span className={fCount > 0 ? "text-primary" : "text-warning"}>
+                        {fCount > 0 ? `จ่ายแล้ว ${fCount} | ` : ''}รอจัดของค้าง ${pCount} รายการ
+                      </span>
+                    </div>
                     <div style={{ background: 'white', borderRadius: '8px', border: '1px solid var(--gray-200)', overflow: 'hidden' }}>
                       {req.items.map((it, idx) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderBottom: idx !== req.items.length - 1 ? '1px solid var(--gray-100)' : 'none' }}>
+                        <div key={it.docId || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderBottom: idx !== req.items.length - 1 ? '1px solid var(--gray-100)' : 'none' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
                             <Package size={16} className="text-muted flex-shrink-0" />
                             <span className="font-medium truncate" title={it.name}>{it.name}</span>
-                            <span className="text-primary font-bold whitespace-nowrap">x {it.Quantity}</span>
                           </div>
-                          <div style={{ marginLeft: '1rem', flexShrink: 0 }}>
+                          <div style={{ marginLeft: '1rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                             {it.itemStatus === 'Pending' ? (
-                              <button 
-                                className="btn btn-secondary btn-sm" 
-                                style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem' }}
-                                onClick={() => handleFulfillItem(req.id, it.ItemID)} 
-                                disabled={processing === req.id + it.ItemID}
-                              >
-                                {processing === req.id + it.ItemID ? 'กำลังจ่าย...' : 'จ่าย'}
-                              </button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span className="text-sm text-muted">จ่าย:</span>
+                                <input 
+                                  type="number" 
+                                  min="1" 
+                                  max={it.Quantity}
+                                  value={editQty[it.docId] !== undefined ? editQty[it.docId] : it.Quantity}
+                                  onChange={(e) => setEditQty({...editQty, [it.docId]: parseInt(e.target.value) || 1})}
+                                  style={{ width: '50px', padding: '0.2rem', textAlign: 'center', border: '1px solid var(--border-light)', borderRadius: '4px' }}
+                                />
+                                <span className="text-sm text-muted whitespace-nowrap">/ {it.Quantity}</span>
+                                <button 
+                                  className="btn btn-secondary btn-sm ml-2" 
+                                  style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem' }}
+                                  onClick={() => handleFulfillItem(req.id, it.docId, it.Quantity)} 
+                                  disabled={processing === it.docId}
+                                >
+                                  {processing === it.docId ? 'กำลังจ่าย...' : 'จ่าย'}
+                                </button>
+                              </div>
                             ) : it.itemStatus === 'Fulfilled' ? (
-                              <button 
-                                className="btn btn-outline btn-sm text-warning" 
-                                style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem' }}
-                                onClick={() => handleUndoFulfillItem(req.id, it.ItemID)} 
-                                disabled={processing === req.id + it.ItemID}
-                              >
-                                <Undo2 size={14} className="mr-1 inline-block"/> ยกเลิก
-                              </button>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <span className="text-primary font-bold whitespace-nowrap">x {it.Quantity}</span>
+                                <button 
+                                  className="btn btn-outline btn-sm text-warning ml-4" 
+                                  style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem' }}
+                                  onClick={() => handleUndoFulfillItem(req.id, it.docId)} 
+                                  disabled={processing === it.docId}
+                                >
+                                  <Undo2 size={14} className="mr-1 inline-block"/> ยกเลิก
+                                </button>
+                              </div>
                             ) : (
-                              <span className="badge-success text-xs px-2 py-1">รับของแล้ว</span>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <span className="text-primary font-bold whitespace-nowrap">x {it.Quantity}</span>
+                                <span className="badge-success text-xs px-2 py-1 ml-4">รับของแล้ว</span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -240,11 +276,12 @@ export default function Fulfillment() {
                       onClick={() => handleFulfillAll(req.id, req.items)}
                       disabled={processing === req.id + '_all'}
                     >
-                      <CheckCircle size={18} /> {processing === req.id + '_all' ? 'กำลังดำเนินการ...' : 'จ่ายทั้งหมดในคำขอนี้'}
+                      <CheckCircle size={18} /> {processing === req.id + '_all' ? 'กำลังดำเนินการ...' : 
+                        (fCount > 0 ? 'จ่ายรายการที่รอจัดของทั้งหมด' : 'จ่ายทั้งหมดในคำขอนี้')}
                     </button>
                   </div>
                 </div>
-              ))}
+              )})}
               {pendingList.length === 0 && <p className="text-muted text-center py-8">ไม่มีรายการรอจัดของ</p>}
             </div>
           </div>
@@ -275,8 +312,8 @@ export default function Fulfillment() {
                           {it.itemStatus === 'Fulfilled' && (
                             <button 
                               className="text-warning hover:underline text-xs" 
-                              onClick={() => handleUndoFulfillItem(req.id, it.ItemID)} 
-                              disabled={processing === req.id + it.ItemID}
+                              onClick={() => handleUndoFulfillItem(req.id, it.docId)} 
+                              disabled={processing === it.docId}
                             >
                               ยกเลิก
                             </button>

@@ -107,10 +107,11 @@ export default function Requisition() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    localStorage.setItem('requesterName', requester);
+    const trimmedName = requester.trim().replace(/\s+/g, ' ');
+    localStorage.setItem('requesterName', trimmedName);
     localStorage.setItem('requesterDepartment', department);
     try {
-      await api.createRequest(requester, department, cart);
+      await api.createRequest(trimmedName, department, cart);
       toast.success('ส่งคำขอสำเร็จ รอแอดมินอนุมัติและจ่ายของ', { duration: 4000 });
       setCart([]);
       setCurrentStep(1);

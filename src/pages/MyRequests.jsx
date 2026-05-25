@@ -31,9 +31,12 @@ export default function MyRequests() {
       const data = await api.getData();
       setInventory(data.inventory || []);
       
-      const myReqs = (data.requests || []).filter(req => 
-        req.Requester && req.Requester.toLowerCase() === nameToSearch.toLowerCase().trim()
-      );
+      const myReqs = (data.requests || []).filter(req => {
+        if (!req.Requester) return false;
+        const normDb = req.Requester.trim().toLowerCase().replace(/\s+/g, ' ');
+        const normSearch = nameToSearch.trim().toLowerCase().replace(/\s+/g, ' ');
+        return normDb === normSearch;
+      });
       
       setRequests(myReqs);
     } catch (e) {

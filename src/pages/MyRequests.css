@@ -1,0 +1,90 @@
+.my-requests-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.request-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-left: 4px solid var(--gray-300);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.request-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.request-card.status-pending {
+  border-left-color: var(--warning-main);
+}
+
+.request-card.status-fulfilled {
+  border-left-color: var(--success-main);
+}
+
+.req-id {
+  font-family: monospace;
+  font-size: 1.1rem;
+  color: var(--primary-main);
+  margin-bottom: 0.2rem;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.status-message {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+}
+
+.message-pending {
+  background-color: var(--warning-light);
+  color: #b45309;
+}
+
+.message-success {
+  background-color: var(--success-light);
+  color: #166534;
+}
+
+.item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.item-thumb-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background-color: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+}
+
+.item-name {
+  font-size: 0.95rem;
+}

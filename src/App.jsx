@@ -12,6 +12,7 @@ import Departments from './pages/Departments';
 import Restock from './pages/Restock';
 import History from './pages/History';
 import StaffSettings from './pages/StaffSettings';
+import MyRequests from './pages/MyRequests';
 import { Package, User, ShieldAlert, ArrowLeft, Lock, PackageSearch, PackagePlus, Users, LayoutDashboard, ClipboardList, BarChart3, History as HistoryIcon, UserCog } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import { api } from './utils/api';
@@ -33,7 +34,11 @@ function App() {
           <>
             <RequesterHeader />
             <main className="main-content animate-fade-in">
-              <Requisition />
+              <Routes>
+                <Route path="/" element={<Requisition />} />
+                <Route path="/my-requests" element={<MyRequests />} />
+                <Route path="*" element={<Navigate to="/requester" />} />
+              </Routes>
             </main>
           </>
         } />
@@ -102,12 +107,17 @@ function Landing() {
 function RequesterHeader() {
   const navigate = useNavigate();
   return (
-    <nav className="navbar" style={{ justifyContent: 'flex-start', gap: '1rem' }}>
-      <button className="btn btn-ghost" onClick={() => navigate('/')}><ArrowLeft size={20}/> กลับ</button>
-      <div className="nav-brand" style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <img src="/app-icon.jpg" alt="โรงเรียนไชยาวิทยา" style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', border: '2px solid white' }} />
-        <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>เบิกพัสดุ - โรงเรียนไชยาวิทยา</span>
+    <nav className="navbar" style={{ justifyContent: 'space-between', gap: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <button className="btn btn-ghost" onClick={() => navigate('/')}><ArrowLeft size={20}/> กลับ</button>
+        <div className="nav-brand" style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img src="/app-icon.jpg" alt="โรงเรียนไชยาวิทยา" style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', border: '2px solid white' }} />
+          <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>เบิกพัสดุ</span>
+        </div>
       </div>
+      <button className="btn btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.95rem' }} onClick={() => navigate('/requester/my-requests')}>
+        <HistoryIcon size={18} className="mr-2" /> ติดตามสถานะคำขอ
+      </button>
     </nav>
   );
 }

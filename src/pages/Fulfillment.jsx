@@ -3,9 +3,11 @@ import { api } from '../utils/api';
 import { CheckCircle, Clock, Package, Trash2, Undo2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDateTimeThai, parseCustomDate } from '../utils/format';
+import { useNavigate } from 'react-router-dom';
 import './Fulfillment.css';
 
 export default function Fulfillment() {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -297,9 +299,14 @@ export default function Fulfillment() {
           </div>
 
           <div className="column fulfilled-column">
-            <h2><CheckCircle size={20} className="inline-icon text-secondary" /> จ่ายครบแล้วล่าสุด</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2><CheckCircle size={20} className="inline-icon text-secondary" /> จ่ายครบแล้วล่าสุด</h2>
+              <button className="btn btn-outline btn-sm text-primary" onClick={() => navigate('/admin/fulfilled-requests')} style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem', minHeight: '32px', border: '1px solid var(--primary)' }}>
+                ดูทั้งหมด
+              </button>
+            </div>
             <div className="request-list">
-              {fulfilledList.slice(0, 50).map(req => {
+              {fulfilledList.slice(0, 3).map(req => {
                 const allCompleted = req.items.every(i => i.itemStatus === 'Completed');
                 return (
                   <div key={`fulfilled-${req.id}`} className={`req-card card ${allCompleted ? 'opacity-75' : ''}`}>

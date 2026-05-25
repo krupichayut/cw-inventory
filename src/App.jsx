@@ -13,6 +13,7 @@ import Restock from './pages/Restock';
 import History from './pages/History';
 import StaffSettings from './pages/StaffSettings';
 import MyRequests from './pages/MyRequests';
+import FulfilledRequests from './pages/FulfilledRequests';
 import { Package, User, ShieldAlert, ArrowLeft, Lock, PackageSearch, PackagePlus, Users, LayoutDashboard, ClipboardList, BarChart3, History as HistoryIcon, UserCog } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import { api } from './utils/api';
@@ -53,6 +54,7 @@ function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/inventory" element={<Inventory />} />
                   <Route path="/fulfillment" element={<Fulfillment />} />
+                  <Route path="/fulfilled-requests" element={<FulfilledRequests />} />
                   <Route path="/restock" element={<Restock />} />
                   <Route path="/history" element={<History />} />
                   <Route path="/stocktake" element={<StockTake />} />

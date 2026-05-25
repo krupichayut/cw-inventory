@@ -31,7 +31,7 @@ export default function Navbar({ onLogout, onChangePassword }) {
           <Users size={20} /> ฝ่ายงาน
         </NavLink>
         <NavLink to="/admin/staff" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <UserCog size={20} /> เจ้าหน้าที่พัสดุ
+          <UserCog size={20} /> ตั้งค่าระบบ
         </NavLink>
         <NavLink to="/admin/report" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <FileText size={20} /> พิมพ์รายงาน

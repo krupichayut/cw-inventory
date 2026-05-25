@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../utils/api';
-import { UserCog, Plus, Trash2, Edit, ShieldAlert, Key } from 'lucide-react';
+import { UserCog, Plus, Trash2, Edit, ShieldAlert, Key, Settings, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Inventory.css'; 
 
@@ -10,22 +10,45 @@ export default function StaffSettings() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   
+  // System Settings state
+  const [sysSettings, setSysSettings] = useState({
+    fiscalYear: '',
+    semesterStart: '',
+    semesterEnd: ''
+  });
+  
   const [addModal, setAddModal] = useState({ show: false, name: '', position: '', password: '' });
   const [editModal, setEditModal] = useState({ show: false, id: '', name: '', position: '', password: '' });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await api.getStaff();
-      setStaffList(data);
+      const [staffData, settingsData] = await Promise.all([
+        api.getStaff(),
+        api.getSystemSettings()
+      ]);
+      setStaffList(staffData);
+      setSysSettings(settingsData);
     } catch (e) {
       console.error(e);
-      toast.error('ไม่สามารถโหลดข้อมูลเจ้าหน้าที่ได้');
+      toast.error('ไม่สามารถโหลดข้อมูลการตั้งค่าได้');
     }
     setLoading(false);
   };
 
   useEffect(() => { loadData(); }, []);
+
+  const saveSystemSettings = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+    try {
+      await api.saveSystemSettings(sysSettings);
+      toast.success('บันทึกการตั้งค่าระบบเรียบร้อย');
+    } catch(e) {
+      toast.error('Error: ' + e);
+    }
+    setProcessing(false);
+  };
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -88,71 +111,127 @@ export default function StaffSettings() {
   };
 
   return (
-    <div className="inventory-page animate-fade-in">
+    <div className="inventory-page animate-fade-in" style={{ paddingBottom: '3rem' }}>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 className="page-title" style={{ margin: 0 }}><UserCog className="inline-icon" /> จัดการเจ้าหน้าที่พัสดุ</h1>
-        <button className="btn btn-primary" onClick={() => setAddModal({ ...addModal, show: true })}>
-          <Plus size={20} /> เพิ่มเจ้าหน้าที่
-        </button>
+        <h1 className="page-title" style={{ margin: 0 }}><Settings className="inline-icon" /> ตั้งค่าระบบและผู้ใช้งาน</h1>
       </div>
 
-      <div className="glass-panel" style={{ padding: '2rem' }}>
-        {loading ? (
-          <div className="text-center text-muted py-8">กำลังโหลดข้อมูล...</div>
-        ) : staffList.length === 0 ? (
-          <div className="text-center py-8">
-            <ShieldAlert size={48} className="text-muted mx-auto mb-4" />
-            <h3 className="text-muted">ยังไม่มีข้อมูลเจ้าหน้าที่</h3>
-            <p className="text-muted mt-2">โปรดเพิ่มรายชื่อเจ้าหน้าที่เพื่อให้ผู้ใช้งานแต่ละคนมีรหัสผ่านของตนเอง</p>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+        
+        {/* General Settings */}
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Settings size={20} className="text-secondary" /> ตั้งค่าทั่วไป (System)
+          </h2>
+          
+          {loading ? (
+            <p className="text-muted">กำลังโหลด...</p>
+          ) : (
+            <form onSubmit={saveSystemSettings}>
+              <div className="form-group mb-4">
+                <label>ปีงบประมาณปัจจุบัน (พ.ศ.)</label>
+                <input 
+                  type="text" 
+                  className="w-full"
+                  value={sysSettings.fiscalYear || ''}
+                  onChange={e => setSysSettings({...sysSettings, fiscalYear: e.target.value})}
+                  placeholder="เช่น 2569"
+                />
+              </div>
+              <div className="form-group mb-4">
+                <label>วันเปิดภาคเรียน (เริ่มต้น)</label>
+                <input 
+                  type="date" 
+                  className="w-full"
+                  value={sysSettings.semesterStart || ''}
+                  onChange={e => setSysSettings({...sysSettings, semesterStart: e.target.value})}
+                />
+              </div>
+              <div className="form-group mb-6">
+                <label>วันปิดภาคเรียน (สิ้นสุด)</label>
+                <input 
+                  type="date" 
+                  className="w-full"
+                  value={sysSettings.semesterEnd || ''}
+                  onChange={e => setSysSettings({...sysSettings, semesterEnd: e.target.value})}
+                />
+              </div>
+              <button type="submit" className="btn btn-secondary w-full" disabled={processing}>
+                <Save size={18} className="mr-2" /> {processing ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่าระบบ'}
+              </button>
+            </form>
+          )}
+        </div>
+
+        {/* Staff Settings */}
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <UserCog size={20} className="text-primary" /> จัดการเจ้าหน้าที่พัสดุ
+            </h2>
+            <button className="btn btn-primary btn-sm" onClick={() => setAddModal({ ...addModal, show: true })}>
+              <Plus size={16} /> เพิ่ม
+            </button>
           </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="inventory-table">
-              <thead>
-                <tr>
-                  <th>ชื่อ-นามสกุล</th>
-                  <th>ตำแหน่ง</th>
-                  <th>รหัสผ่าน (PIN)</th>
-                  <th style={{ width: '120px', textAlign: 'center' }}>จัดการ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {staffList.map(staff => (
-                  <tr key={staff.ID}>
-                    <td style={{ fontWeight: 500 }}>{staff.Name}</td>
-                    <td>{staff.Position || '-'}</td>
-                    <td>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                         <Key size={14} /> 
-                         <span style={{ letterSpacing: '2px' }}>{staff.Password ? '••••' : 'ไม่ระบุ'}</span>
-                       </div>
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                        <button 
-                          className="btn-ghost" 
-                          onClick={() => setEditModal({ show: true, id: staff.ID, name: staff.Name, position: staff.Position, password: staff.Password || '' })}
-                          style={{ padding: '0.4rem', color: 'var(--primary)' }}
-                          title="แก้ไข"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button 
-                          className="btn-ghost" 
-                          onClick={() => handleDelete(staff.ID, staff.Name)}
-                          style={{ padding: '0.4rem', color: 'var(--danger)' }}
-                          title="ลบ"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+          
+          {loading ? (
+            <div className="text-center text-muted py-8">กำลังโหลดข้อมูล...</div>
+          ) : staffList.length === 0 ? (
+            <div className="text-center py-8">
+              <ShieldAlert size={40} className="text-muted mx-auto mb-3" />
+              <p className="text-muted text-sm">ยังไม่มีข้อมูลเจ้าหน้าที่</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="inventory-table">
+                <thead>
+                  <tr>
+                    <th>ชื่อ-สกุล</th>
+                    <th>PIN</th>
+                    <th style={{ width: '80px', textAlign: 'center' }}>จัดการ</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {staffList.map(staff => (
+                    <tr key={staff.ID}>
+                      <td>
+                        <div style={{ fontWeight: 500 }}>{staff.Name}</div>
+                        <div className="text-muted text-xs">{staff.Position || '-'}</div>
+                      </td>
+                      <td>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                           <Key size={14} /> 
+                           <span style={{ letterSpacing: '2px', fontSize: '0.9rem' }}>{staff.Password ? '••••' : 'ไม่มี'}</span>
+                         </div>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                          <button 
+                            className="btn-ghost" 
+                            onClick={() => setEditModal({ show: true, id: staff.ID, name: staff.Name, position: staff.Position, password: staff.Password || '' })}
+                            style={{ padding: '0.2rem', color: 'var(--primary)' }}
+                            title="แก้ไข"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button 
+                            className="btn-ghost" 
+                            onClick={() => handleDelete(staff.ID, staff.Name)}
+                            style={{ padding: '0.2rem', color: 'var(--danger)' }}
+                            title="ลบ"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* Add Modal */}

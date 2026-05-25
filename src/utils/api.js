@@ -431,13 +431,30 @@ export const api = {
     return data;
   },
   
-  async updateStaff(id, staffData) {
-    await updateDoc(doc(db, 'staff', id), staffData);
+  async updateStaff(id, data) {
+    await updateDoc(doc(db, 'staff', id), data);
     return { status: 'success' };
   },
   
   async deleteStaff(id) {
     await deleteDoc(doc(db, 'staff', id));
+    return { status: 'success' };
+  },
+
+  // --- System Settings ---
+  async getSystemSettings() {
+    try {
+      const snap = await getDoc(doc(db, 'settings', 'system'));
+      if (snap.exists()) return snap.data();
+      return { fiscalYear: '', semesterStart: '', semesterEnd: '' };
+    } catch(e) {
+      console.error(e);
+      return { fiscalYear: '', semesterStart: '', semesterEnd: '' };
+    }
+  },
+  
+  async saveSystemSettings(data) {
+    await setDoc(doc(db, 'settings', 'system'), data, { merge: true });
     return { status: 'success' };
   }
 };

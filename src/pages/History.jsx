@@ -65,15 +65,27 @@ export default function History() {
   };
 
   const filteredTx = transactions.filter(tx => {
-    const name = inventoryMap[tx.ItemID] || tx.ItemID;
-    const matchSearch = name.toLowerCase().includes(search.toLowerCase()) || 
-           tx.TxID.toLowerCase().includes(search.toLowerCase()) ||
-           (tx.FulfillerName || '').toLowerCase().includes(search.toLowerCase()) ||
-           (tx.RestockerName || '').toLowerCase().includes(search.toLowerCase());
+    const name = inventoryMap[tx.ItemID] || tx.ItemID || '';
+    const matchSearch = String(name).toLowerCase().includes(search.toLowerCase()) || 
+           String(tx.TxID || '').toLowerCase().includes(search.toLowerCase()) ||
+           String(tx.FulfillerName || '').toLowerCase().includes(search.toLowerCase()) ||
+           String(tx.RestockerName || '').toLowerCase().includes(search.toLowerCase());
            
     let matchMonth = true;
     if (filterMonth) {
-       const txMonth = tx.Date.substring(0, 7); // YYYY-MM
+       let txMonth = '';
+       if (tx.Date && typeof tx.Date === 'string') {
+         if (tx.Date.includes('/')) {
+           const parts = tx.Date.split(' ')[0].split('/');
+           if (parts.length >= 3) {
+             const m = parts[1].padStart(2, '0');
+             const y = parts[2];
+             txMonth = `${y}-${m}`;
+           }
+         } else {
+           txMonth = tx.Date.substring(0, 7);
+         }
+       }
        matchMonth = txMonth === filterMonth;
     }
     

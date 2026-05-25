@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
 import { LayoutDashboard, Package, AlertTriangle, Clock, TrendingUp, Activity, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { formatDateTimeThai } from '../utils/format';
+import { formatDateTimeThai, parseCustomDate } from '../utils/format';
 import './Inventory.css';
 
 export default function Dashboard() {
@@ -61,7 +61,7 @@ export default function Dashboard() {
         const monthlyItemCounts = {}; // For top items
         
         tx.forEach(t => {
-          const d = new Date(t.Date);
+          const d = parseCustomDate(t.Date);
           if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
             if (t.Type === 'Out') {
               const qty = parseInt(t.Quantity) || 0;
@@ -89,7 +89,7 @@ export default function Dashboard() {
         setTopItems(sortedItems.map(item => ({ ...item, pct: Math.round((item.count / maxCount) * 100) })));
         
         // 5. Recent Activity (Last 5)
-        const sortedTx = [...tx].sort((a, b) => new Date(b.Date) - new Date(a.Date)).slice(0, 5);
+        const sortedTx = [...tx].sort((a, b) => parseCustomDate(b.Date) - parseCustomDate(a.Date)).slice(0, 5);
         setRecentTx(sortedTx);
         
       } catch (e) {

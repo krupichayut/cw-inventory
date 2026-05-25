@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
 import { Trash2, History as HistoryIcon, Search, Image as ImageIcon, Printer, Filter, Calendar } from 'lucide-react';
-import { formatDateTimeThai } from '../utils/format';
+import { formatDateTimeThai, parseCustomDate } from '../utils/format';
 import toast from 'react-hot-toast';
 import './History.css';
 
@@ -27,7 +27,7 @@ export default function History() {
       (data.requests || []).forEach(r => reqMap[r.RequestID] = r.Requester);
       setRequestsMap(reqMap);
       
-      const sortedTx = (data.transactions || []).sort((a, b) => new Date(b.Date) - new Date(a.Date));
+      const sortedTx = (data.transactions || []).sort((a, b) => parseCustomDate(b.Date) - parseCustomDate(a.Date));
       setTransactions(sortedTx);
     } catch (e) {
       console.error(e);
@@ -73,20 +73,15 @@ export default function History() {
            
     let matchMonth = true;
     if (filterMonth) {
-       let txMonth = '';
-       if (tx.Date && typeof tx.Date === 'string') {
-         if (tx.Date.includes('/')) {
-           const parts = tx.Date.split(' ')[0].split('/');
-           if (parts.length >= 3) {
-             const m = parts[1].padStart(2, '0');
-             const y = parts[2];
-             txMonth = `${y}-${m}`;
-           }
-         } else {
-           txMonth = tx.Date.substring(0, 7);
-         }
+       const d = parseCustomDate(tx.Date);
+       if (d && !isNaN(d.getTime())) {
+         const y = d.getFullYear();
+         const m = String(d.getMonth() + 1).padStart(2, '0');
+         const txMonth = `${y}-${m}`;
+         matchMonth = txMonth === filterMonth;
+       } else {
+         matchMonth = false;
        }
-       matchMonth = txMonth === filterMonth;
     }
     
     let matchType = true;

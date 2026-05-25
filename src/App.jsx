@@ -228,39 +228,83 @@ function AdminLogin({ onLogin }) {
 function ChangePasswordModal({ onClose }) {
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    const savedPin = localStorage.getItem('adminPin') || '1234';
-    if (currentPin !== savedPin) {
-      toast.error('รหัสผ่านเดิมไม่ถูกต้อง');
-      return;
-    }
     if (newPin.trim() === '') {
       toast.error('กรุณาตั้งรหัสผ่านใหม่');
       return;
     }
-    localStorage.setItem('adminPin', newPin);
-    toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
-    onClose();
+
+    setSaving(true);
+    try {
+      const adminUserStr = localStorage.getItem('adminUser');
+      let isStaff = false;
+      let staffData = null;
+
+      if (adminUserStr) {
+        try {
+          staffData = JSON.parse(adminUserStr);
+          if (staffData && staffData.ID && staffData.ID !== 'admin') {
+            isStaff = true;
+          }
+        } catch (e) {}
+      }
+
+      if (isStaff && staffData) {
+        const currentSavedPassword = staffData.Password !== undefined ? staffData.Password : '1234';
+        if (currentPin !== currentSavedPassword) {
+          toast.error('รหัสผ่านเดิมไม่ถูกต้อง');
+          setSaving(false);
+          return;
+        }
+
+        await api.updateStaff(staffData.ID, {
+          Name: staffData.Name,
+          Position: staffData.Position,
+          Password: newPin
+        });
+
+        staffData.Password = newPin;
+        localStorage.setItem('adminUser', JSON.stringify(staffData));
+        toast.success('เปลี่ยนรหัสผ่านส่วนตัวสำเร็จ');
+      } else {
+        const savedPin = localStorage.getItem('adminPin') || '1234';
+        if (currentPin !== savedPin) {
+          toast.error('รหัสผ่านเดิมไม่ถูกต้อง');
+          setSaving(false);
+          return;
+        }
+
+        localStorage.setItem('adminPin', newPin);
+        toast.success('เปลี่ยนรหัสผ่าน Admin สำเร็จ');
+      }
+      onClose();
+    } catch (err) {
+      toast.error('เกิดข้อผิดพลาด: ' + err.message);
+    }
+    setSaving(false);
   };
 
   return createPortal(
     <div className="modal-overlay">
       <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '400px' }}>
-        <h2><Lock size={24} className="inline-icon" /> เปลี่ยนรหัสผ่าน Admin</h2>
+        <h2><Lock size={24} className="inline-icon" /> เปลี่ยนรหัสผ่าน</h2>
         <form onSubmit={handleSave}>
           <div className="form-group">
             <label>รหัสผ่านปัจจุบัน</label>
-            <input type="password" required value={currentPin} onChange={e => setCurrentPin(e.target.value)} />
+            <input type="password" required value={currentPin} onChange={e => setCurrentPin(e.target.value)} disabled={saving} />
           </div>
           <div className="form-group">
             <label>รหัสผ่านใหม่</label>
-            <input type="password" required value={newPin} onChange={e => setNewPin(e.target.value)} />
+            <input type="password" required value={newPin} onChange={e => setNewPin(e.target.value)} disabled={saving} />
           </div>
           <div className="modal-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>ยกเลิก</button>
-            <button type="submit" className="btn btn-primary">บันทึกรหัสผ่าน</button>
+            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>ยกเลิก</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'กำลังบันทึก...' : 'บันทึกรหัสผ่าน'}
+            </button>
           </div>
         </form>
       </div>

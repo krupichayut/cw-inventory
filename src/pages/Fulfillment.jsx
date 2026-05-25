@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { CheckCircle, Clock, Package, Trash2, Undo2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { formatDateTimeThai } from '../utils/format';
+import { formatDateTimeThai, parseCustomDate } from '../utils/format';
 import './Fulfillment.css';
 
 export default function Fulfillment() {
@@ -144,7 +144,7 @@ export default function Fulfillment() {
       acc[req.RequestID] = {
         id: req.RequestID,
         date: formatDateTimeThai(req.Date),
-        timestamp: new Date(req.Date).getTime(),
+        timestamp: parseCustomDate(req.Date).getTime(),
         requester: req.Requester,
         department: req.Department || '-',
         items: []

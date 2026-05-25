@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { ClipboardList, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './StockTake.css';
 
 export default function StockTake() {
@@ -8,18 +9,18 @@ export default function StockTake() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const loadData = async (force = false) => {
+    setLoading(true);
+    const data = await api.getData(force);
+    const takeItems = data.inventory.map(i => ({
+      ...i,
+      ActualQty: i.Balance
+    }));
+    setItems(takeItems);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const data = await api.getData();
-      // สร้าง state สำหรับตรวจนับ
-      const takeItems = data.inventory.map(i => ({
-        ...i,
-        ActualQty: i.Balance
-      }));
-      setItems(takeItems);
-      setLoading(false);
-    };
     loadData();
   }, []);
 
@@ -28,21 +29,31 @@ export default function StockTake() {
   };
 
   const handleSave = async () => {
-    const diffs = items.filter(i => parseInt(i.ActualQty) !== parseInt(i.Balance));
+    const diffs = items.filter(i => {
+      const sysQty = parseInt(i.Balance) || 0;
+      const actQty = i.ActualQty === '' ? 0 : parseInt(i.ActualQty);
+      return sysQty !== actQty;
+    });
+
     if (diffs.length === 0) {
-      alert('ไม่มียอดแตกต่าง (ยอดตรงกันหมด)');
+      toast.success('ไม่มียอดแตกต่าง (ยอดตรงกันหมด)');
       return;
     }
     
-    if (!confirm(`พบยอดที่แตกต่าง ${diffs.length} รายการ ต้องการบันทึกส่วนต่างนี้หรือไม่?`)) return;
+    if (!window.confirm(`พบยอดที่แตกต่าง ${diffs.length} รายการ ต้องการยืนยันการปรับปรุงสต๊อกในฐานข้อมูลจริงหรือไม่?`)) return;
 
     setSaving(true);
     try {
-      // สำหรับระบบสมบูรณ์ จะต้องส่ง API เพื่ออัปเดตยอดคงเหลือและบันทึก StockTake
-      // เราใช้ API adjustStock (ต้องสร้างใน backend ถ้ายอดไม่ตรง)
-      alert('ระบบจำลอง: บันทึกข้อมูลสำเร็จ');
+      for (const item of diffs) {
+        const sysQty = parseInt(item.Balance) || 0;
+        const actQty = item.ActualQty === '' ? 0 : parseInt(item.ActualQty);
+        const diff = actQty - sysQty;
+        await api.adjustStock(item.ID, diff, 'Adjust');
+      }
+      toast.success(`บันทึกส่วนต่างสำเร็จ ${diffs.length} รายการ`);
+      await loadData(true);
     } catch (e) {
-      alert('Error: ' + e);
+      toast.error('Error: ' + (e.message || e));
     }
     setSaving(false);
   };

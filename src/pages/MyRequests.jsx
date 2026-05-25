@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
-import { formatDateTimeThai } from '../utils/format';
+import { formatDateTimeThai, parseCustomDate } from '../utils/format';
 import { Search, Clock, CheckCircle, Package, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './MyRequests.css';
@@ -64,7 +64,7 @@ export default function MyRequests() {
       acc[req.RequestID] = {
         id: req.RequestID,
         date: formatDateTimeThai(req.Date),
-        timestamp: new Date(req.Date).getTime(),
+        timestamp: parseCustomDate(req.Date).getTime(),
         requester: req.Requester,
         department: req.Department || '-',
         items: []

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { Printer, Settings } from 'lucide-react';
+import { parseCustomDate } from '../utils/format';
 import './Report.css';
 
 export default function Report() {
   const [items, setItems] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   
@@ -21,8 +23,13 @@ export default function Report() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const data = await api.getData();
-      setItems(data.inventory);
+      try {
+        const data = await api.getData();
+        setItems(data.inventory || []);
+        setTransactions(data.transactions || []);
+      } catch (e) {
+        console.error(e);
+      }
       setLoading(false);
     };
     loadData();
@@ -58,6 +65,55 @@ export default function Report() {
     "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
   ];
 
+  // Calculate monthly flow metrics for historical reports
+  const getMonthlyReportData = () => {
+    const targetMonth = signatures.reportMonth !== undefined ? parseInt(signatures.reportMonth) : new Date().getMonth();
+    const targetYear = signatures.reportYear !== undefined ? parseInt(signatures.reportYear) : new Date().getFullYear();
+    
+    const startDate = new Date(targetYear, targetMonth, 1, 0, 0, 0, 0);
+    const endDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+    
+    return items.map(item => {
+      let currentBal = parseInt(item.Balance) || 0;
+      let totalIn = 0;
+      let totalOut = 0;
+      
+      const itemTxs = transactions.filter(t => t.ItemID === item.ID);
+      
+      itemTxs.forEach(t => {
+        const txDate = parseCustomDate(t.Date);
+        if (txDate > endDate) {
+          // Transaction happened after the selected month: reverse its effect
+          if (t.Type === 'In') {
+            currentBal -= parseInt(t.Quantity) || 0;
+          } else {
+            currentBal += parseInt(t.Quantity) || 0;
+          }
+        } else if (txDate >= startDate && txDate <= endDate) {
+          // Transaction happened during the selected month: sum it up
+          if (t.Type === 'In') {
+            totalIn += parseInt(t.Quantity) || 0;
+          } else {
+            totalOut += parseInt(t.Quantity) || 0;
+          }
+        }
+      });
+      
+      const endingBalance = Math.max(0, currentBal);
+      const beginningBalance = Math.max(0, endingBalance - totalIn + totalOut);
+      
+      return {
+        ...item,
+        beginningBalance,
+        totalIn,
+        totalOut,
+        endingBalance
+      };
+    });
+  };
+
+  const reportItems = getMonthlyReportData();
+
   return (
     <div className="report-container">
       <div className="report-controls no-print">
@@ -86,26 +142,30 @@ export default function Report() {
           <table className="report-table">
             <thead>
               <tr>
-                <th width="10%">ลำดับ</th>
-                <th width="20%">รหัสพัสดุ</th>
-                <th width="40%">รายการพัสดุ</th>
-                <th width="15%">คงเหลือ (ชิ้น)</th>
-                <th width="15%">หมายเหตุ</th>
+                <th width="5%" style={{ textAlign: 'center' }}>ลำดับ</th>
+                <th width="15%" style={{ textAlign: 'center' }}>รหัสพัสดุ</th>
+                <th width="35%">รายการพัสดุ</th>
+                <th width="12%" style={{ textAlign: 'center' }}>ยอดยกมา</th>
+                <th width="10%" style={{ textAlign: 'center' }}>รับเข้า (+)</th>
+                <th width="10%" style={{ textAlign: 'center' }}>จ่ายออก (-)</th>
+                <th width="13%" style={{ textAlign: 'center' }}>คงเหลือสุทธิ</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((item, index) => (
+              {reportItems.map((item, index) => (
                 <tr key={item.ID}>
                   <td className="text-center">{index + 1}</td>
                   <td className="text-center">{item.ID}</td>
                   <td>{item.Name}</td>
-                  <td className="text-center">{item.Balance}</td>
-                  <td></td>
+                  <td className="text-center">{item.beginningBalance}</td>
+                  <td className="text-center" style={{ color: 'var(--secondary)' }}>{item.totalIn > 0 ? `+${item.totalIn}` : '0'}</td>
+                  <td className="text-center" style={{ color: 'var(--warning)' }}>{item.totalOut > 0 ? `-${item.totalOut}` : '0'}</td>
+                  <td className="text-center" style={{ fontWeight: 'bold' }}>{item.endingBalance}</td>
                 </tr>
               ))}
-              {items.length === 0 && (
+              {reportItems.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center">ไม่มีข้อมูลพัสดุ</td>
+                  <td colSpan="7" className="text-center">ไม่มีข้อมูลพัสดุ</td>
                 </tr>
               )}
             </tbody>

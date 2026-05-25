@@ -15,6 +15,19 @@ export default function Requisition() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  
+  // Search and Category states
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const categories = [
+    { id: 'All', name: 'ทั้งหมด' },
+    { id: 'หมวดเครื่องเขียนและอุปกรณ์สำนักงาน', name: 'เครื่องเขียน/สำนักงาน' },
+    { id: 'หมวดอุปกรณ์อิเล็กทรอนิกส์และไอที', name: 'อิเล็กทรอนิกส์/ไอที' },
+    { id: 'หมวดผลิตภัณฑ์กระดาษและซอง', name: 'กระดาษ/ซอง' },
+    { id: 'หมวดผลิตภัณฑ์และอุปกรณ์ทำความสะอาด', name: 'อุปกรณ์ทำความสะอาด' },
+    { id: 'อื่นๆ', name: 'อื่นๆ' }
+  ];
 
   useEffect(() => {
     const loadData = async () => {
@@ -34,6 +47,12 @@ export default function Requisition() {
     if (savedName) setRequester(savedName);
     if (savedDept) setDepartment(savedDept);
   }, []);
+
+  const filteredItems = items.filter(item => {
+    const matchSearch = item.Name?.toLowerCase().includes(search.toLowerCase()) || item.ID?.toLowerCase().includes(search.toLowerCase());
+    const matchCategory = selectedCategory === 'All' || item.Category === selectedCategory;
+    return matchSearch && matchCategory;
+  });
 
   const addToCart = (item, qtyToAdd = 1) => {
     const existing = cart.find(c => c.id === item.ID);
@@ -139,11 +158,44 @@ export default function Requisition() {
       {/* --- STEP 2: Select Items --- */}
       {currentStep === 2 && (
         <div className="wizard-step flex-layout animate-fade-in" style={{ width: '100%', gap: '1.5rem' }}>
-          <div className="req-items" style={{ flex: 1 }}>
-            <h2 className="page-title">เลือกพัสดุ</h2>
+          <div className="req-items" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <h2 className="page-title" style={{ marginBottom: '0.5rem' }}>เลือกพัสดุ</h2>
+            
+            <div className="search-bar" style={{ margin: '0.5rem 0 1rem 0' }}>
+              <Search size={20} className="text-muted" />
+              <input 
+                type="text" 
+                placeholder="ค้นหาชื่อ หรือ รหัสพัสดุ..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="category-tabs" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-light)' }}>
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`btn btn-sm ${selectedCategory === cat.id ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ 
+                    whiteSpace: 'nowrap',
+                    padding: '0.4rem 0.8rem',
+                    minHeight: '36px',
+                    fontSize: '0.85rem',
+                    borderRadius: 'var(--radius-sm)',
+                    background: selectedCategory === cat.id ? 'var(--primary)' : 'rgba(0,0,0,0.03)',
+                    color: selectedCategory === cat.id ? 'white' : 'var(--text-muted)'
+                  }}
+                  onClick={() => setSelectedCategory(cat.id)}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+
             {loading ? <p>Loading...</p> : (
-              <div className="item-list">
-                {items.map(item => (
+              <div className="item-list" style={{ flex: 1, overflowY: 'auto', maxHeight: '60vh' }}>
+                {filteredItems.map(item => (
                   <div key={item.ID} className="list-card glass-panel" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <img 
                       src={item.ImageURL ? getDirectImageUrl(item.ImageURL) : 'https://via.placeholder.com/60'} 
@@ -170,6 +222,9 @@ export default function Requisition() {
                     </div>
                   </div>
                 ))}
+                {filteredItems.length === 0 && (
+                  <p className="text-center text-muted" style={{ padding: '2rem' }}>ไม่พบรายการพัสดุที่สอดคล้อง</p>
+                )}
               </div>
             )}
           </div>

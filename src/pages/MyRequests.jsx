@@ -31,7 +31,6 @@ export default function MyRequests() {
       const data = await api.getData();
       setInventory(data.inventory || []);
       
-      // Filter requests by name (case insensitive partial match or exact match)
       const myReqs = (data.requests || []).filter(req => 
         req.Requester && req.Requester.toLowerCase() === nameToSearch.toLowerCase().trim()
       );
@@ -50,7 +49,16 @@ export default function MyRequests() {
     }
   };
 
-  // Group requests by RequestID
+  const handleConfirmReceipt = async (requestId) => {
+    if (!window.confirm('ยืนยันว่าคุณได้รับพัสดุครบถ้วนตามรายการที่จัดเตรียมไว้แล้วใช่หรือไม่?')) return;
+    try {
+      await api.confirmReceipt(requestId);
+      loadData(activeName);
+    } catch (e) {
+      alert('Error: ' + e);
+    }
+  };
+
   const grouped = requests.reduce((acc, req) => {
     if (!acc[req.RequestID]) {
       acc[req.RequestID] = {
@@ -59,7 +67,6 @@ export default function MyRequests() {
         timestamp: new Date(req.Date).getTime(),
         requester: req.Requester,
         department: req.Department || '-',
-        status: req.Status,
         items: []
       };
     }
@@ -68,13 +75,24 @@ export default function MyRequests() {
       ...req,
       name: invItem ? invItem.Name : req.ItemID,
       image: invItem ? getDirectImageUrl(invItem.ImageURL) : null,
-      baseUnit: invItem ? invItem.BaseUnit : 'ชิ้น'
+      baseUnit: invItem ? invItem.BaseUnit : 'ชิ้น',
+      itemStatus: req.Status
     });
     return acc;
   }, {});
 
-  // Sort by date (newest first)
-  const requestList = Object.values(grouped).sort((a, b) => b.timestamp - a.timestamp);
+  const requestList = Object.values(grouped).map(req => {
+    const hasPending = req.items.some(i => i.itemStatus === 'Pending');
+    const hasFulfilled = req.items.some(i => i.itemStatus === 'Fulfilled');
+    const allCompleted = req.items.every(i => i.itemStatus === 'Completed');
+    
+    let overallStatus = 'Pending';
+    if (allCompleted) overallStatus = 'Completed';
+    else if (!hasPending && hasFulfilled) overallStatus = 'Fulfilled';
+    else if (hasPending && hasFulfilled) overallStatus = 'Partial';
+    
+    return { ...req, overallStatus, hasFulfilled, allCompleted };
+  }).sort((a, b) => b.timestamp - a.timestamp);
 
   return (
     <div className="my-requests-page animate-fade-in pb-12">
@@ -124,28 +142,36 @@ export default function MyRequests() {
       ) : (
         <div className="request-timeline">
           {requestList.map(req => (
-            <div key={req.id} className={`request-card ${req.status === 'Pending' ? 'status-pending' : 'status-fulfilled'}`}>
+            <div key={req.id} className={`request-card ${req.allCompleted ? 'border-l-4 border-green-500 opacity-80' : req.overallStatus === 'Pending' ? 'status-pending' : 'border-l-4 border-blue-500'}`}>
               <div className="request-header flex justify-between items-start">
                 <div>
                   <h3 className="req-id">{req.id}</h3>
                   <p className="req-date text-sm text-muted">{req.date}</p>
                 </div>
-                <div className={`status-badge ${req.status === 'Pending' ? 'badge-warning' : 'badge-success'}`}>
-                  {req.status === 'Pending' ? (
+                <div className={`status-badge ${req.allCompleted ? 'bg-green-100 text-green-800' : req.overallStatus === 'Pending' ? 'badge-warning' : 'bg-blue-100 text-blue-800'}`}>
+                  {req.allCompleted ? (
+                    <><CheckCircle size={16} /> รับของแล้ว</>
+                  ) : req.overallStatus === 'Pending' ? (
                     <><Clock size={16} /> รอดำเนินการ</>
+                  ) : req.overallStatus === 'Partial' ? (
+                    <><Clock size={16} /> จ่ายบางส่วน</>
                   ) : (
-                    <><CheckCircle size={16} /> จ่ายของแล้ว</>
+                    <><CheckCircle size={16} /> จ่ายครบแล้ว</>
                   )}
                 </div>
               </div>
 
-              {req.status === 'Pending' ? (
-                <div className="status-message message-pending">
-                  รอฝ่ายพัสดุจัดเตรียมและจ่ายของ
+              {req.allCompleted ? (
+                 <div className="status-message bg-green-50 text-green-800 p-3 rounded-md mt-4">
+                  คุณได้รับพัสดุรายการนี้เรียบร้อยแล้ว ขอบคุณครับ
+                </div>
+              ) : req.hasFulfilled ? (
+                <div className="status-message bg-blue-50 text-blue-800 p-3 rounded-md mt-4">
+                  <strong>พัสดุจัดเตรียมไว้แล้ว!</strong> กรุณาเข้ามารับของที่ฝ่ายพัสดุ
                 </div>
               ) : (
-                <div className="status-message message-success">
-                  <strong>พัสดุของคุณพร้อมแล้ว!</strong> สามารถเข้าไปรับของที่ฝ่ายพัสดุได้เลย
+                <div className="status-message message-pending">
+                  รอฝ่ายพัสดุจัดเตรียมและจ่ายของ
                 </div>
               )}
 
@@ -160,15 +186,38 @@ export default function MyRequests() {
                         ) : (
                           <div className="item-thumb-placeholder"><Package size={16} /></div>
                         )}
-                        <span className="item-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+                        <span className="item-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.name}
+                        </span>
                       </div>
-                      <span className="item-qty font-medium" style={{ whiteSpace: 'nowrap', marginLeft: '1rem', minWidth: 'max-content' }}>
-                        {item.Quantity} {item.baseUnit}
-                      </span>
+                      <div className="text-right">
+                        <div className="item-qty font-medium" style={{ whiteSpace: 'nowrap', minWidth: 'max-content' }}>
+                          {item.Quantity} {item.baseUnit}
+                        </div>
+                        <div className="text-xs mt-1">
+                          {item.itemStatus === 'Pending' && <span className="text-warning">รอจัดของ</span>}
+                          {item.itemStatus === 'Fulfilled' && <span className="text-blue-600 font-medium">รอรับของ</span>}
+                          {item.itemStatus === 'Completed' && <span className="text-success">รับแล้ว</span>}
+                        </div>
+                      </div>
                     </li>
                   ))}
                 </ul>
               </div>
+
+              {req.hasFulfilled && !req.allCompleted && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <button 
+                    className="btn btn-primary w-full" 
+                    onClick={() => handleConfirmReceipt(req.id)}
+                  >
+                    <CheckCircle size={18} /> ยืนยันว่ารับของแล้วครบถ้วน
+                  </button>
+                  <p className="text-xs text-center text-muted mt-2">
+                    * กดปุ่มนี้เมื่อคุณได้รับพัสดุจากเจ้าหน้าที่เรียบร้อยแล้ว
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>

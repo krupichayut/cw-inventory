@@ -225,6 +225,87 @@ export const api = {
     return { status: 'success' };
   },
 
+  async fulfillItem(requestId, itemId, fulfillerName) {
+    const docId = requestId + '_' + itemId;
+    const reqRef = doc(db, 'requests', docId);
+    const reqSnap = await getDoc(reqRef);
+    if (!reqSnap.exists()) throw new Error('Item not found');
+    
+    const reqData = reqSnap.data();
+    if (reqData.Status !== 'Pending') return { status: 'already_fulfilled' };
+    
+    await updateDoc(reqRef, { Status: 'Fulfilled' });
+    
+    const invRef = doc(db, 'inventory', reqData.ItemID);
+    const invSnap = await getDoc(invRef);
+    if (invSnap.exists()) {
+       const currentBalance = parseInt(invSnap.data().Balance) || 0;
+       await updateDoc(invRef, { Balance: currentBalance - parseInt(reqData.Quantity) });
+    }
+    
+    const txData = { 
+      TxID: 'TX-' + Date.now() + '-' + Math.floor(Math.random()*1000), 
+      Date: new Date().toISOString(), 
+      Type: 'Out', 
+      ItemID: reqData.ItemID, 
+      Quantity: reqData.Quantity, 
+      RefReqID: requestId,
+      FulfillerName: fulfillerName || 'Admin',
+      RequesterName: reqData.Requester || ''
+    };
+    await setDoc(doc(db, 'transactions', txData.TxID), txData);
+    
+    const q = query(collection(db, 'requests'), where('RequestID', '==', requestId));
+    const allReqs = await getDocs(q);
+    const allDone = allReqs.docs.every(d => d.data().Status !== 'Pending');
+    if (allDone) {
+      backupToGAS({ action: 'fulfillRequest', requestId, fulfillerName });
+    }
+    
+    api.clearCache();
+    return { status: 'success' };
+  },
+
+  async undoFulfillItem(requestId, itemId) {
+    const docId = requestId + '_' + itemId;
+    const reqRef = doc(db, 'requests', docId);
+    const reqSnap = await getDoc(reqRef);
+    if (!reqSnap.exists()) throw new Error('Item not found');
+    
+    const reqData = reqSnap.data();
+    if (reqData.Status !== 'Fulfilled') throw new Error('Can only undo Fulfilled items');
+    
+    await updateDoc(reqRef, { Status: 'Pending' });
+    
+    const invRef = doc(db, 'inventory', reqData.ItemID);
+    const invSnap = await getDoc(invRef);
+    if (invSnap.exists()) {
+       const currentBalance = parseInt(invSnap.data().Balance) || 0;
+       await updateDoc(invRef, { Balance: currentBalance + parseInt(reqData.Quantity) });
+    }
+    
+    const q = query(collection(db, 'transactions'), where('RefReqID', '==', requestId), where('ItemID', '==', itemId), where('Type', '==', 'Out'));
+    const txSnap = await getDocs(q);
+    for (let d of txSnap.docs) {
+      await deleteDoc(d.ref);
+    }
+    
+    api.clearCache();
+    return { status: 'success' };
+  },
+
+  async confirmReceipt(requestId) {
+    const q = query(collection(db, 'requests'), where('RequestID', '==', requestId));
+    const reqSnap = await getDocs(q);
+    for (const docSnap of reqSnap.docs) {
+       if (docSnap.data().Status === 'Fulfilled') {
+         await updateDoc(docSnap.ref, { Status: 'Completed' });
+       }
+    }
+    api.clearCache();
+    return { status: 'success' };
+  },
+
   async deleteRequest(requestId) {
     const q = query(collection(db, 'requests'), where('RequestID', '==', requestId));
     const reqSnap = await getDocs(q);

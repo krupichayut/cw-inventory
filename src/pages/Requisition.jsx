@@ -241,7 +241,7 @@ export default function Requisition() {
                       <div className="font-medium">{c.name}</div>
                     </div>
                     <div className="cart-controls" style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center' }}>
-                      <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, -1)}><Minus size={16} /></button>
+                      <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, -1)} aria-label="ลดจำนวน" title="ลดจำนวน"><Minus size={16} /></button>
                       <input 
                         type="number" 
                         className="qty-input" 
@@ -251,10 +251,11 @@ export default function Requisition() {
                         onBlur={(e) => {
                           if (c.quantity === '' || c.quantity < 1) setQty(c.id, 1);
                         }}
+                        aria-label="จำนวนพัสดุ"
                       />
-                      <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, 1)}><Plus size={16} /></button>
+                      <button type="button" className="ctrl-btn" onClick={() => updateQty(c.id, 1)} aria-label="เพิ่มจำนวน" title="เพิ่มจำนวน"><Plus size={16} /></button>
                       <span className="text-muted" style={{ fontSize: '0.85rem', marginLeft: '0.5rem', flex: 1 }}>{c.baseUnit}</span>
-                      <button type="button" className="ctrl-btn text-danger ml-2" onClick={() => remove(c.id)}><Trash2 size={16} /></button>
+                      <button type="button" className="ctrl-btn text-danger ml-2" onClick={() => remove(c.id)} aria-label="ลบออกจากตะกร้า" title="ลบออกจากตะกร้า"><Trash2 size={16} /></button>
                     </div>
                   </div>
                 ))

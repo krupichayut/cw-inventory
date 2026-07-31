@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc, query, where, writeBatch } from 'firebase/firestore';
 
 export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzXM2X88G_b6PGlcB9fjJ9frOhcUkA-WYvbmmKH1sWs9eqGb1eIKGZmy11ChbbpNy0/exec';
 
@@ -64,13 +64,15 @@ export const api = {
         const gasData = await res.json();
         
         // Save to Firebase
-        for(let item of gasData.inventory || []) await setDoc(doc(db, 'inventory', item.ID), item);
+        const batch = writeBatch(db);
+        for(let item of gasData.inventory || []) batch.set(doc(db, 'inventory', item.ID), item);
         for(let req of gasData.requests || []) {
           req.docId = req.RequestID + '_' + req.ItemID;
-          await setDoc(doc(db, 'requests', req.docId), req);
+          batch.set(doc(db, 'requests', req.docId), req);
         }
-        for(let dep of gasData.departments || []) await setDoc(doc(db, 'departments', dep.ID), dep);
-        for(let tx of gasData.transactions || []) await setDoc(doc(db, 'transactions', tx.TxID), tx);
+        for(let dep of gasData.departments || []) batch.set(doc(db, 'departments', dep.ID), dep);
+        for(let tx of gasData.transactions || []) batch.set(doc(db, 'transactions', tx.TxID), tx);
+        await batch.commit();
         
         cacheData = gasData;
         lastFetchTime = Date.now();
@@ -260,6 +262,7 @@ export const api = {
     const invSnap = await getDoc(invRef);
     if (invSnap.exists()) {
        const currentBalance = parseInt(invSnap.data().Balance) || 0;
+       if (currentBalance < qtyToFulfill) throw new Error('สต๊อกคงเหลือไม่เพียงพอสำหรับการจ่าย');
        await updateDoc(invRef, { Balance: currentBalance - qtyToFulfill });
     }
     

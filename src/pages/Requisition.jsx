@@ -4,7 +4,7 @@ import { ShoppingCart, Plus, Minus, Trash2, ArrowRight, ArrowLeft, CheckCircle, 
 import toast from 'react-hot-toast';
 import ImagePreviewModal from '../components/ImagePreviewModal';
 import { db } from '../utils/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, doc } from 'firebase/firestore';
 import './Requisition.css';
 
 export default function Requisition() {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, getDirectImageUrl } from '../utils/api';
-import { Trash2, History as HistoryIcon, Search, Image as ImageIcon, Printer, Filter, Calendar } from 'lucide-react';
+import { Trash2, History as HistoryIcon, Search, Image as ImageIcon, Printer, Filter, Calendar, User, PackagePlus, PackageMinus, RefreshCw } from 'lucide-react';
 import { formatDateTimeThai, parseCustomDate } from '../utils/format';
 import toast from 'react-hot-toast';
 import './History.css';
@@ -53,14 +53,22 @@ export default function History() {
   };
 
   const getTxColor = (type) => {
-    if (type === 'In') return 'var(--secondary)';
-    if (type === 'Out') return 'var(--warning)';
+    if (type === 'In' || type === 'AdjustIn') return 'var(--secondary)';
+    if (type === 'Out' || type === 'AdjustOut') return 'var(--warning)';
     return 'var(--text-muted)';
+  };
+
+  const getTxStyle = (type) => {
+    if (type === 'In' || type === 'AdjustIn') return { bg: '#e8f5e9', text: '#2e7d32', icon: <PackagePlus size={14} style={{marginRight:'4px'}}/> };
+    if (type === 'Out' || type === 'AdjustOut') return { bg: '#ffebee', text: '#c62828', icon: <PackageMinus size={14} style={{marginRight:'4px'}}/> };
+    return { bg: '#f5f5f5', text: '#616161', icon: <RefreshCw size={14} style={{marginRight:'4px'}}/> };
   };
 
   const getTxText = (type) => {
     if (type === 'In') return 'รับเข้าพัสดุ';
     if (type === 'Out') return 'เบิกจ่าย';
+    if (type === 'AdjustIn') return 'ปรับเพิ่มยอด';
+    if (type === 'AdjustOut') return 'ปรับลดยอด';
     return 'ปรับลดยอด';
   };
 
@@ -164,22 +172,29 @@ export default function History() {
                 <tr key={tx.TxID}>
                   <td style={{ whiteSpace: 'nowrap' }}>{formatDateTimeThai(tx.Date)}</td>
                   <td>
-                    <span style={{ 
-                      padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 'bold',
-                      color: getTxColor(tx.Type), background: `rgba(0,0,0,0.05)`
-                    }}>
-                      {getTxText(tx.Type)}
-                    </span>
+                    {(() => {
+                      const style = getTxStyle(tx.Type);
+                      return (
+                        <span style={{ 
+                          display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: '20px', 
+                          fontSize: '0.85rem', fontWeight: '600', color: style.text, background: style.bg
+                        }}>
+                          {style.icon} {getTxText(tx.Type)}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td>{inventoryMap[tx.ItemID] || tx.ItemID}</td>
                   <td style={{ textAlign: 'center', fontWeight: 'bold', color: getTxColor(tx.Type) }}>
-                    {tx.Type === 'Out' ? '-' : '+'}{tx.Quantity}
+                    {(tx.Type === 'Out' || tx.Type === 'AdjustOut') ? '-' : '+'}{tx.Quantity}
                   </td>
                   <td>
-                    {tx.RestockerName && <div style={{ fontSize: '0.85rem' }}>ผู้รับเข้า: {tx.RestockerName}</div>}
-                    {(tx.RequesterName || requestsMap[tx.RefReqID]) && <div style={{ fontSize: '0.85rem' }}>ผู้เบิก: {tx.RequesterName || requestsMap[tx.RefReqID]}</div>}
-                    {tx.FulfillerName && <div style={{ fontSize: '0.85rem' }}>ผู้จ่าย: {tx.FulfillerName}</div>}
-                    {!tx.RestockerName && !tx.FulfillerName && !tx.RequesterName && !requestsMap[tx.RefReqID] && '-'}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {tx.RestockerName && <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} className="text-muted" /> <span className="text-muted">ผู้รับเข้า:</span> <strong>{tx.RestockerName}</strong></div>}
+                      {(tx.RequesterName || requestsMap[tx.RefReqID]) && <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} className="text-muted" /> <span className="text-muted">ผู้เบิก:</span> <strong>{tx.RequesterName || requestsMap[tx.RefReqID]}</strong></div>}
+                      {tx.FulfillerName && <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} className="text-muted" /> <span className="text-muted">ผู้จ่าย:</span> <strong>{tx.FulfillerName}</strong></div>}
+                      {!tx.RestockerName && !tx.FulfillerName && !tx.RequesterName && !requestsMap[tx.RefReqID] && <span className="text-muted">-</span>}
+                    </div>
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     {tx.ReceiptURL ? (

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
-import { LayoutDashboard, Package, AlertTriangle, Clock, TrendingUp, Activity, XCircle } from 'lucide-react';
+import { LayoutDashboard, Package, AlertTriangle, Clock, TrendingUp, Activity, XCircle, Power } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { formatDateTimeThai, parseCustomDate } from '../utils/format';
+import { db } from '../utils/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import toast from 'react-hot-toast';
 import './Inventory.css';
 
 export default function Dashboard() {
@@ -21,6 +24,18 @@ export default function Dashboard() {
   const [recentTx, setRecentTx] = useState([]);
   const [inventoryMap, setInventoryMap] = useState({});
   const [requestsMap, setRequestsMap] = useState({});
+  const [isSystemOpen, setIsSystemOpen] = useState(true);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'system'), (docSnap) => {
+      if (docSnap.exists()) {
+        setIsSystemOpen(docSnap.data().isRequisitionOpen !== false);
+      } else {
+        setIsSystemOpen(true);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -131,10 +146,29 @@ export default function Dashboard() {
     return 'ปรับยอด';
   };
 
+  const handleToggleSystem = async () => {
+    try {
+      const newState = !isSystemOpen;
+      await api.toggleSystemStatus(newState);
+      toast.success(`ระบบเบิกพัสดุ ${newState ? 'เปิด' : 'ปิด'} เรียบร้อยแล้ว`);
+    } catch (e) {
+      toast.error('ไม่สามารถเปลี่ยนสถานะระบบได้');
+    }
+  };
+
   return (
     <div className="dashboard-page animate-fade-in" style={{ paddingBottom: '2rem' }}>
-      <div className="page-header">
-        <h1 className="page-title"><LayoutDashboard className="inline-icon" /> แดชบอร์ดภาพรวม</h1>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 className="page-title"><LayoutDashboard className="inline-icon text-primary" /> แดชบอร์ดภาพรวม</h1>
+        
+        <button 
+          onClick={handleToggleSystem}
+          className={`btn ${isSystemOpen ? 'btn-primary' : 'btn-danger'}`}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <Power size={18} />
+          {isSystemOpen ? 'เปิดรับเบิก' : 'ปิดรับเบิก'}
+        </button>
       </div>
 
       {/* --- STAT CARDS --- */}

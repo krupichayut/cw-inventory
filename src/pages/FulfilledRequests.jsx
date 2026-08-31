@@ -148,15 +148,15 @@ export default function FulfilledRequests() {
               <div key={req.id} className="req-card glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '1.5rem' }}>
                 <div className="req-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
                   <div>
-                    <div className="req-id">{req.id}</div>
-                    <div className="req-user" style={{ fontSize: '1.05rem', fontWeight: '600', marginTop: '0.25rem' }}>ผู้เบิก: {req.requester}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>ฝ่ายงาน: {req.department}</div>
+                    <div className="req-id" style={{ opacity: 0.6 }}>#{req.id}</div>
+                    <div className="req-user" style={{ fontSize: '1.2rem', fontWeight: '700', marginTop: '0.4rem', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>{req.requester}</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>แผนก: {req.department}</div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <button className="btn-ghost text-danger" onClick={() => handleDeleteRequest(req.id)} style={{ padding: '0.25rem' }} title="ลบคำขอนี้">
-                      <Trash2 size={16} />
+                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <button className="btn-ghost text-danger" onClick={() => handleDeleteRequest(req.id)} style={{ padding: '0.35rem', borderRadius: '8px' }} title="ลบคำขอนี้">
+                      <Trash2 size={18} />
                     </button>
-                    <div className="req-date" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{req.date}</div>
+                    <div className="req-date" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: '500' }}>{req.date}</div>
                   </div>
                 </div>
 

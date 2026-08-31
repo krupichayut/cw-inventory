@@ -3,6 +3,8 @@ import { api, getDirectImageUrl } from '../utils/api';
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight, ArrowLeft, CheckCircle, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImagePreviewModal from '../components/ImagePreviewModal';
+import { db } from '../utils/firebase';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import './Requisition.css';
 
 export default function Requisition() {
@@ -15,6 +17,7 @@ export default function Requisition() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [isSystemOpen, setIsSystemOpen] = useState(true);
   
   // Search and Category states
   const [search, setSearch] = useState('');
@@ -30,22 +33,69 @@ export default function Requisition() {
   ];
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const data = await api.getData();
-      setItems(data.inventory
-        .filter(i => parseInt(i.Balance) > 0)
+    setLoading(true);
+    let inventoryList = [];
+    let requestsList = [];
+    let isDataLoaded = false;
+
+    const processData = () => {
+      if (!isDataLoaded) return;
+      const pendingMap = {};
+      requestsList.forEach(r => {
+        if (r.Status === 'Pending') {
+          pendingMap[r.ItemID] = (pendingMap[r.ItemID] || 0) + (parseInt(r.Quantity) || 0);
+        }
+      });
+      
+      const availableItems = inventoryList.map(i => {
+        const bal = parseInt(i.Balance) || 0;
+        const pending = pendingMap[i.ID] || 0;
+        return {
+          ...i,
+          AvailableBalance: Math.max(0, bal - pending)
+        };
+      });
+
+      setItems(availableItems
+        .filter(i => i.AvailableBalance > 0)
         .sort((a, b) => (a.Order || 999) - (b.Order || 999))
       );
-      setDepartments((data.departments || []).sort((a, b) => (a.Order || 999) - (b.Order || 999)));
       setLoading(false);
     };
-    loadData();
+
+    const unsubInv = onSnapshot(collection(db, 'inventory'), (snap) => {
+      inventoryList = snap.docs.map(d => d.data());
+      isDataLoaded = true;
+      processData();
+    });
+
+    const unsubReq = onSnapshot(query(collection(db, 'requests'), where('Status', '==', 'Pending')), (snap) => {
+      requestsList = snap.docs.map(d => d.data());
+      processData();
+    });
+
+    const unsubSys = onSnapshot(doc(db, 'settings', 'system'), (docSnap) => {
+      if (docSnap.exists()) {
+        setIsSystemOpen(docSnap.data().isRequisitionOpen !== false);
+      }
+    });
+
+    const loadDepts = async () => {
+      const data = await api.getData();
+      setDepartments((data.departments || []).sort((a, b) => (a.Order || 999) - (b.Order || 999)));
+    };
+    loadDepts();
 
     const savedName = localStorage.getItem('requesterName');
     const savedDept = localStorage.getItem('requesterDepartment');
     if (savedName) setRequester(savedName);
     if (savedDept) setDepartment(savedDept);
+
+    return () => {
+      unsubInv();
+      unsubReq();
+      unsubSys();
+    };
   }, []);
 
   const filteredItems = items.filter(item => {
@@ -57,16 +107,16 @@ export default function Requisition() {
   const addToCart = (item, qtyToAdd = 1) => {
     const existing = cart.find(c => c.id === item.ID);
     if (existing) {
-      if (existing.quantity + qtyToAdd <= item.Balance) {
+      if (existing.quantity + qtyToAdd <= item.AvailableBalance) {
         setCart(cart.map(c => c.id === item.ID ? { ...c, quantity: c.quantity + qtyToAdd } : c));
       } else {
-        toast.error(`ไม่สามารถเพิ่มได้ สต๊อกคงเหลือไม่พอ (เหลือ ${item.Balance})`);
+        toast.error(`ไม่สามารถเพิ่มได้ สต๊อกคงเหลือสุทธิไม่พอ (เหลือให้เบิก ${item.AvailableBalance})`);
       }
     } else {
-      if (qtyToAdd <= item.Balance) {
-        setCart([...cart, { id: item.ID, name: item.Name, max: parseInt(item.Balance), quantity: qtyToAdd, image: item.ImageURL, baseUnit: item.BaseUnit || 'ชิ้น' }]);
+      if (qtyToAdd <= item.AvailableBalance) {
+        setCart([...cart, { id: item.ID, name: item.Name, max: item.AvailableBalance, quantity: qtyToAdd, image: item.ImageURL, baseUnit: item.BaseUnit || 'ชิ้น' }]);
       } else {
-        toast.error(`สต๊อกคงเหลือไม่พอ (เหลือ ${item.Balance})`);
+        toast.error(`สต๊อกคงเหลือสุทธิไม่พอ (เหลือให้เบิก ${item.AvailableBalance})`);
       }
     }
   };
@@ -110,6 +160,17 @@ export default function Requisition() {
     const trimmedName = requester.trim().replace(/\s+/g, ' ');
     localStorage.setItem('requesterName', trimmedName);
     localStorage.setItem('requesterDepartment', department);
+    
+    // Validate stock one last time against real-time items
+    for (const cartItem of cart) {
+      const realItem = items.find(i => i.ID === cartItem.id);
+      if (!realItem || cartItem.quantity > realItem.AvailableBalance) {
+         toast.error(`เสียใจด้วย! สต๊อก ${cartItem.name} เพิ่งถูกเบิกตัดหน้า (เหลือให้เบิกแค่ ${realItem ? realItem.AvailableBalance : 0}) กรุณาปรับจำนวนใหม่`, { duration: 6000 });
+         setSubmitting(false);
+         return;
+      }
+    }
+
     try {
       await api.createRequest(trimmedName, department, cart);
       toast.success('ส่งคำขอสำเร็จ รอแอดมินอนุมัติและจ่ายของ', { duration: 4000 });
@@ -120,6 +181,22 @@ export default function Requisition() {
     }
     setSubmitting(false);
   };
+
+  if (!isSystemOpen) {
+    return (
+      <div className="req-page flex-layout" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <div className="glass-panel text-center animate-fade-in" style={{ padding: '3rem', maxWidth: '500px' }}>
+          <div style={{ background: 'var(--warning-light)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <span style={{ fontSize: '2.5rem' }}>🚧</span>
+          </div>
+          <h2 style={{ fontSize: '1.8rem', color: 'var(--text-dark)', marginBottom: '1rem' }}>ปิดให้บริการชั่วคราว</h2>
+          <p className="text-muted" style={{ fontSize: '1.1rem', lineHeight: 1.6 }}>
+            ขณะนี้ระบบเบิกพัสดุปิดให้บริการชั่วคราว เพื่อให้เจ้าหน้าที่จัดระเบียบคลังพัสดุและเคลียร์ยอด<br/><br/>กรุณากลับมาทำรายการใหม่อีกครั้งในภายหลังครับ
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="req-page flex-layout wizard-mode">
@@ -208,7 +285,7 @@ export default function Requisition() {
                     <div className="list-info" style={{ flex: 1 }}>
                       <h4 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{item.Name}</h4>
                       <div style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px', display: 'inline-block', fontWeight: 'bold' }}>
-                        คงเหลือ: {item.Balance} {item.BaseUnit || 'ชิ้น'}
+                        พร้อมจ่าย: {item.AvailableBalance} {item.BaseUnit || 'ชิ้น'}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>

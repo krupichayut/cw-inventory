@@ -178,20 +178,31 @@ export const api = {
   },
 
   async createRequest(requester, department, items) {
-    // ส่งไป GAS ก่อน เพื่อรับรหัส REQ ที่ถูกต้อง
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'createRequest', requester, department, items }) });
-    const data = await res.json();
+    const reqId = 'REQ-' + Date.now();
+    const dateStr = new Date().toISOString();
     
-    // ดึงข้อมูลมาอัปเดต Firebase ให้ตรงกัน
-    const gasRes = await fetch(`${GAS_URL}?action=getData`);
-    const gasData = await gasRes.json();
-    for(let req of gasData.requests || []) {
-      if(req.Requester === requester && req.Status === 'Pending') {
-        await setDoc(doc(db, 'requests', req.RequestID + '_' + req.ItemID), req);
-      }
+    // Save to Firebase immediately for real-time UI updates
+    const batch = writeBatch(db);
+    for (const item of items) {
+      const docId = reqId + '_' + item.id;
+      batch.set(doc(db, 'requests', docId), {
+        RequestID: reqId,
+        Date: dateStr,
+        Requester: requester,
+        ItemID: item.id,
+        Quantity: item.quantity,
+        Status: 'Pending',
+        Department: department || '',
+        FulfillerName: ''
+      });
     }
+    await batch.commit();
     api.clearCache();
-    return data;
+    
+    // Background sync to GAS
+    backupToGAS({ action: 'createRequest', requester, department, items, reqId, dateStr });
+    
+    return { status: 'success', requestId: reqId };
   },
 
   async fulfillRequest(requestId, fulfillerName) {
@@ -346,17 +357,23 @@ export const api = {
     return { status: 'success' };
   },
 
-  async adjustStock(itemId, quantity, type = 'In') {
+  async adjustStock(itemId, quantity, type = 'Adjust') {
     const invRef = doc(db, 'inventory', itemId);
     const invSnap = await getDoc(invRef);
     if (invSnap.exists()) {
        const currentBalance = parseInt(invSnap.data().Balance) || 0;
-       await updateDoc(invRef, { Balance: currentBalance + parseInt(quantity) });
+       const diff = parseInt(quantity);
+       await updateDoc(invRef, { Balance: currentBalance + diff });
        
-       const txData = { TxID: 'TX-' + Date.now(), Date: new Date().toISOString(), Type: type, ItemID: itemId, Quantity: Math.abs(parseInt(quantity)) };
+       let finalType = type;
+       if (type === 'Adjust') {
+           finalType = diff > 0 ? 'AdjustIn' : 'AdjustOut';
+       }
+       
+       const txData = { TxID: 'TX-' + Date.now(), Date: new Date().toISOString(), Type: finalType, ItemID: itemId, Quantity: Math.abs(diff) };
        await setDoc(doc(db, 'transactions', txData.TxID), txData);
+       backupToGAS({ action: 'adjustStock', itemId, quantity: Math.abs(diff), type: finalType });
     }
-    backupToGAS({ action: 'adjustStock', itemId, quantity, type });
     api.clearCache();
     return { status: 'success' };
   },
@@ -365,6 +382,12 @@ export const api = {
     await deleteDoc(doc(db, 'transactions', txId));
     backupToGAS({ action: 'deleteTransaction', txId });
     api.clearCache();
+    return { status: 'success' };
+  },
+
+  async toggleSystemStatus(isOpen) {
+    const sysRef = doc(db, 'settings', 'system');
+    await setDoc(sysRef, { isRequisitionOpen: isOpen }, { merge: true });
     return { status: 'success' };
   },
 

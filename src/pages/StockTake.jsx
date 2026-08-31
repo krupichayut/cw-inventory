@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import { ClipboardList, Save } from 'lucide-react';
+import { ClipboardList, Save, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './StockTake.css';
 
@@ -12,9 +12,26 @@ export default function StockTake() {
   const loadData = async (force = false) => {
     setLoading(true);
     const data = await api.getData(force);
+    
+    const transactions = data.transactions || [];
+    const historyMap = {};
+    
+    transactions.forEach(tx => {
+      if (!historyMap[tx.ItemID]) historyMap[tx.ItemID] = 0;
+      const qty = parseInt(tx.Quantity) || 0;
+      if (tx.Type === 'In' || tx.Type === 'AdjustIn') {
+        historyMap[tx.ItemID] += qty;
+      } else if (tx.Type === 'Out' || tx.Type === 'AdjustOut') {
+        historyMap[tx.ItemID] -= qty;
+      } else if (tx.Type === 'Adjust') {
+        historyMap[tx.ItemID] += qty; 
+      }
+    });
+
     const takeItems = data.inventory.map(i => ({
       ...i,
-      ActualQty: i.Balance
+      ActualQty: i.Balance,
+      HistoricalQty: historyMap[i.ID] || 0
     }));
     setItems(takeItems);
     setLoading(false);
@@ -66,7 +83,7 @@ export default function StockTake() {
           <Save size={18} /> {saving ? 'กำลังบันทึก...' : 'บันทึกผลการนับ'}
         </button>
       </div>
-      <p className="text-muted mb-4">ระบบดึงยอดปัจจุบัน (Snapshot) มาให้แล้ว กรุณากรอก "ยอดนับจริง" หากพบว่าไม่ตรงกัน</p>
+      <p className="text-muted mb-4">ระบบดึงยอดปัจจุบัน (Snapshot) มาให้แล้ว กรุณากรอก "ยอดนับจริง" หากพบว่าไม่ตรงกัน <br/><span className="text-danger" style={{fontSize: '0.85rem'}}>*หาก "ยอดประวัติ" ไม่ตรงกับ "ยอดระบบ" แปลว่ามีความผิดปกติของการบันทึกข้อมูลในอดีต (ให้ยึดยอดนับจริงเป็นหลัก)</span></p>
 
       {loading ? <p>Loading...</p> : (
         <div className="table-container glass-panel">
@@ -75,6 +92,7 @@ export default function StockTake() {
               <tr>
                 <th>รหัสพัสดุ</th>
                 <th>ชื่อพัสดุ</th>
+                <th className="text-center">ยอดประวัติ</th>
                 <th className="text-center">ยอดระบบ</th>
                 <th className="text-center">ยอดนับจริง</th>
                 <th className="text-center">ส่วนต่าง</th>
@@ -82,16 +100,22 @@ export default function StockTake() {
             </thead>
             <tbody>
               {items.map(item => {
+                const histQty = item.HistoricalQty;
                 const sysQty = parseInt(item.Balance);
                 const actQty = item.ActualQty === '' ? 0 : parseInt(item.ActualQty);
                 const diff = actQty - sysQty;
                 const hasDiff = diff !== 0;
+                const isCorrupted = histQty !== sysQty;
 
                 return (
                   <tr key={item.ID} className={hasDiff ? 'row-diff' : ''}>
                     <td className="text-muted">{item.ID}</td>
-                    <td className="font-medium">{item.Name}</td>
-                    <td className="text-center text-lg">{sysQty}</td>
+                    <td className="font-medium">
+                      {item.Name}
+                      {isCorrupted && <AlertTriangle size={14} className="text-warning" style={{marginLeft: '6px', display: 'inline-block'}} title="ยอดประวัติไม่ตรงกับยอดระบบ"/>}
+                    </td>
+                    <td className="text-center text-muted">{histQty}</td>
+                    <td className={`text-center text-lg ${isCorrupted ? 'text-warning font-bold' : ''}`}>{sysQty}</td>
                     <td className="text-center">
                       <input 
                         type="number" 
